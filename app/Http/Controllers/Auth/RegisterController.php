@@ -188,10 +188,9 @@ class RegisterController extends Controller
     //         ], 500);
     //     }
     // }
-
-
     public function register(Request $request)
     {
+        //
         try {
             DB::beginTransaction();
 
