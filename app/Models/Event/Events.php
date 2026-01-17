@@ -22,6 +22,8 @@ class Events extends Model
         'category',
         'image',
         'uuid', // add uuid to fillable
+        'role',
+        'role_code'
     ];
 
     /**

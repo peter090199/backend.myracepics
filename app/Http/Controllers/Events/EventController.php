@@ -6,14 +6,63 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Event\Events;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+
 
 class EventController extends Controller
 {
-    /**
-     * Save a new event with single image
-     */
-
     public function save(Request $request)
+    {
+        $validated = $request->validate([
+            'title'    => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'date'     => 'required|date',
+            'category' => 'required|string|max:100',
+            'image'    => 'nullable|string',
+        ]);
+
+        // 🔥 Get authenticated user
+        $user = Auth::user();
+
+        $role = $user->role;           // ex: Photographer
+        $roleCode = $user->role_code;  // ex: PH
+
+        $imagePath = null;
+
+        if (!empty($validated['image'])) {
+
+            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['image']);
+            $imageData = str_replace(' ', '+', $imageData);
+
+            // Folder by role_code
+            $fileName = 'event-' . time() . '.png';
+            $relativePath = $roleCode . '/' . $fileName;
+
+            Storage::disk('public')->put($relativePath, base64_decode($imageData));
+
+            $imagePath = asset('storage/' . $relativePath);
+        }
+
+        $event = Events::create([
+            'title'     => $validated['title'],
+            'location'  => $validated['location'],
+            'date'      => $validated['date'],
+            'category'  => $validated['category'],
+            'role'      => $role,
+            'role_code' => $roleCode,
+            'image'     => json_encode($imagePath ? [$imagePath] : []),
+            'user_id'   => $user->id, // recommended
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Event saved successfully',
+            'event'   => $event
+        ]);
+    }
+
+
+    public function save1(Request $request)
     {
         $validated = $request->validate([
             'title'    => 'required|string|max:255',
