@@ -36,11 +36,10 @@ class EventController extends Controller
 
             // Folder by role_code
             $fileName = 'event-' . time() . '.png';
-            $relativePath = $roleCode . '/' . $fileName;
-
+            $relativePath = $roleCode . '/' . $role . '/' . $fileName;
             Storage::disk('public')->put($relativePath, base64_decode($imageData));
-
-            $imagePath = asset('storage/' . $relativePath);
+            $imagePath = asset('storage/app/public/' . $relativePath);
+          //  $imagePath = url('storage/app/public/' . $relativePath);
         }
 
         $event = Events::create([
