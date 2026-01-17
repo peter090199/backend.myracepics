@@ -20,7 +20,6 @@ class EventController extends Controller
             'category' => 'required|string|max:100',
             'image'    => 'nullable|string',
         ]);
-
         // 🔥 Get authenticated user
         $user = Auth::user();
 
