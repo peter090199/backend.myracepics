@@ -189,7 +189,6 @@ class RegisterController extends Controller
     //     }
     // }
     // 
-
     public function register(Request $request)
     {
         try {
@@ -210,8 +209,10 @@ class RegisterController extends Controller
                 ], 422);
             }
 
-            // Generate unique code
-            $newCode = (User::max('code') ?? 700) + 1;
+            // Generate unique code across users and resources
+            do {
+                $newCode = (max(User::max('code') ?? 700, Resource::max('code') ?? 700)) + 1;
+            } while (User::where('code', $newCode)->exists() || Resource::where('code', $newCode)->exists());
 
             // Role → role_code mapping
             $roleCodeMap = [
