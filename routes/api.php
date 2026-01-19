@@ -298,6 +298,10 @@
     Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
     Route::post('googleLogin', [GoogleAuthController::class, 'googleLogin']);
 
+    Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
+    Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
+
+
     //EVENTS
     Route::post('events/save', [EventController::class, 'save']);
     Route::delete('events/delete/{id}', [EventController::class, 'delete']);

@@ -113,4 +113,42 @@ class GoogleAuthController extends Controller
             'user' => $user
         ]);
     }
+
+
+      // Step 1: Redirect to Google
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->stateless()->redirect();
+    }
+
+    // Step 2: Handle callback
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
+
+            // Find or create user
+            $user = User::firstOrCreate(
+                ['email' => $googleUser->getEmail()],
+                [
+                    'name' => $googleUser->getName(),
+                    'google_id' => $googleUser->getId(),
+                    'email_verified_at' => now(),
+                ]
+            );
+
+            // Create token (for API auth)
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+                'user' => $user
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Authentication failed', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    
 }
