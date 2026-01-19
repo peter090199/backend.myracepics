@@ -7,10 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Support\Str;
 // use App\Http\Controllers\Controller;
-// use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Facades\Socialite;
 // use App\Models\User;
 // use Illuminate\Support\Str;
-// use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Auth;
 
 class GoogleAuthController extends Controller
 {
@@ -150,5 +150,5 @@ class GoogleAuthController extends Controller
         }
     }
 
-    
+
 }
