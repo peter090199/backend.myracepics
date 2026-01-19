@@ -296,7 +296,7 @@
 
     Route::get('auth/google', [GoogleAuthController::class, 'redirect']);
     Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
-    Route::post('auth/google', [GoogleAuthController::class, 'googleLogin']);
+    Route::post('googleLogin', [GoogleAuthController::class, 'googleLogin']);
 
     //EVENTS
     Route::post('events/save', [EventController::class, 'save']);

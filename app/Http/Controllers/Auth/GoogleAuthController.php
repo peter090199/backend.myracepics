@@ -14,7 +14,8 @@ use Illuminate\Support\Str;
 
 class GoogleAuthController extends Controller
 {
-      public function googleLogin(Request $request)
+    
+    public function googleLogin(Request $request)
     {
         $request->validate([
             'credential' => 'required|string'
@@ -46,7 +47,7 @@ class GoogleAuthController extends Controller
             'user'  => $user
         ]);
     }
-    
+
     public function redirect()
     {
         return Socialite::driver('google')
