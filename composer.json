@@ -11,6 +11,7 @@
         "illuminate/broadcasting": "*",
         "laravel/framework": "^10.0",
         "laravel/sanctum": "^3.3",
+        "laravel/socialite": "^5.24",
         "laravel/tinker": "^2.8",
         "league/flysystem-aws-s3-v3": "3.0",
         "propaganistas/laravel-phone": "^5.3",
