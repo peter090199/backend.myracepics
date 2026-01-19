@@ -40,6 +40,10 @@
     use App\Http\Controllers\System\Users\AppUsersController;
     use App\Http\Controllers\StorageBackblaze\PhotoUploadController;
     use App\Http\Controllers\Events\EventController;
+    use App\Http\Controllers\Auth\GoogleAuthController;
+
+
+    
     /*
     |--------------------------------------------------------------------------
     | API Routes
@@ -289,6 +293,9 @@
     //backbaze photo routes
     Route::get('photos/list', [PhotoUploadController::class, 'list']);
     Route::post('photos/delete', [PhotoUploadController::class, 'delete']);
+
+    Route::get('auth/google', [GoogleAuthController::class, 'redirect']);
+    Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
 
     //EVENTS
     Route::post('events/save', [EventController::class, 'save']);
