@@ -56,7 +56,7 @@
     */  
 
     // PUBLIC
-    Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
+    Route::get('auth/google/redirect', [GoogleAuthController::class, 'handleGoogleCallback']);
     Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 
 
