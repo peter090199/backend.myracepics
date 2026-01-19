@@ -57,7 +57,7 @@
 
     // PUBLIC
     Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
-    Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
+    // Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 
 
 
@@ -303,6 +303,7 @@
     Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
     Route::post('googleLogin', [GoogleAuthController::class, 'googleLogin']);
 
+    Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 
     //EVENTS
     Route::post('events/save', [EventController::class, 'save']);
