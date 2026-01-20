@@ -13,6 +13,7 @@ use App\Models\Userprofile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use DB;
+use App\Http\Controllers\Auth\Resource;
 
 class GoogleAuthController extends Controller
 {
