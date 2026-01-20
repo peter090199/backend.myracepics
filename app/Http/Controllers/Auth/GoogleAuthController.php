@@ -113,4 +113,59 @@ class GoogleAuthController extends Controller
             ], 500);
         }
     }
+
+    
+    public function setGoogleRole(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'role'    => 'required|in:runner,photographer',
+        ]);
+
+        try {
+            $user = User::findOrFail($request->user_id);
+
+            $roleCodeMap = [
+                'runner'       => 'DEF-USERS',
+                'photographer' => 'DEF-PHOTOGRAPHER',
+            ];
+
+            DB::transaction(function () use ($user, $request, $roleCodeMap) {
+                // Update user role
+                $user->update([
+                    'role'      => $request->role,
+                    'role_code' => $roleCodeMap[$request->role],
+                ]);
+
+                // Update Resource profile
+                $resource = Resource::where('code', $user->code)->first();
+                if ($resource) {
+                    $resource->update([
+                        'role'      => $request->role,
+                        'role_code' => $roleCodeMap[$request->role],
+                    ]);
+                }
+            });
+
+            // Create API token for Angular
+            $token = $user->createToken('google-token')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Role updated successfully.',
+                'token'   => $token,
+                'user'    => $user,
+            ]);
+
+        } catch (\Throwable $e) {
+            \Log::error('Set Google role error: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to set role. '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    
 }
