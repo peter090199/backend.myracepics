@@ -1,9 +1,6 @@
-<VirtualHost *:80>
-    ServerName backend.myracepics.com
-    DocumentRoot /var/www/backend.myracepics.com/public
-
-    <Directory /var/www/backend.myracepics.com/public>
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
