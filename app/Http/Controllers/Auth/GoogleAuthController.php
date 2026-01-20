@@ -89,16 +89,23 @@ class GoogleAuthController extends Controller
             $token = $user->createToken('google-token')->plainTextToken;
             $frontend = config('app.frontend.url', 'https://myracepics.com');
 
-            // Redirect Angular
+            // REDIRECT LOGIC
             if (!$user->role) {
+                // No role yet → go to role selection page
                 return redirect()->to(
                     "{$frontend}/auth/google/select-role?user_id={$user->id}&token={$token}"
                 );
             }
 
-            return redirect()->to(
-                "{$frontend}/auth/google/callback?user_id={$user->id}&token={$token}"
-            );
+            // Role exists → redirect to correct Angular route
+            if ($user->role === 'runner') {
+                return redirect()->to("{$frontend}/runner/allevents?user_id={$user->id}&token={$token}");
+            } elseif ($user->role === 'photographer') {
+                return redirect()->to("{$frontend}/photographer/allevents?user_id={$user->id}&token={$token}");
+            }
+
+            // Fallback (in case role is something unexpected)
+            return redirect()->to("{$frontend}/auth/google/select-role?user_id={$user->id}&token={$token}");
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -113,6 +120,97 @@ class GoogleAuthController extends Controller
             ], 500);
         }
     }
+
+    // public function handleGoogleCallback(Request $request)
+    // {
+    //     try {
+    //         // Check if Google sent 'code'
+    //         if (!$request->has('code')) {
+    //             throw new \Exception('Missing authorization code from Google');
+    //         }
+
+    //         DB::beginTransaction();
+
+    //         // Get Google user
+    //         $googleUser = Socialite::driver('google')->stateless()->user();
+
+    //         // Check existing user
+    //         $user = User::where('google_id', $googleUser->getId())
+    //             ->orWhere('email', $googleUser->getEmail())
+    //             ->first();
+
+    //         if (!$user) {
+    //             // Generate unique code
+    //             do {
+    //                 $newCode = max(
+    //                     User::max('code') ?? 700,
+    //                     Resource::max('code') ?? 700
+    //                 ) + 1;
+    //             } while (
+    //                 User::where('code', $newCode)->exists() ||
+    //                 Resource::where('code', $newCode)->exists()
+    //             );
+
+    //             // Create user
+    //             $user = User::create([
+    //                 'fname'       => $googleUser->getName(),
+    //                 'lname'       => null,
+    //                 'fullname'    => $googleUser->getName(),
+    //                 'email'       => $googleUser->getEmail(),
+    //                 'google_id'   => $googleUser->getId(),
+    //                 'password'    => Hash::make('Myracepics123@'),
+    //                 'code'        => $newCode,
+    //                 'is_online'   => true,
+    //                 'role'        => null,
+    //                 'role_code'   => null,
+    //             ]);
+
+    //             // Create resource
+    //             Resource::create([
+    //                 'code'       => $newCode,
+    //                 'fname'      => $googleUser->getName(),
+    //                 'lname'      => null,
+    //                 'fullname'   => $googleUser->getName(),
+    //                 'email'      => $googleUser->getEmail(),
+    //                 'role'       => null,
+    //                 'role_code'  => null,
+    //                 'coverphoto' => 'default.jpg',
+    //             ]);
+    //         } else {
+    //             // Existing user → mark online
+    //             $user->update(['is_online' => true]);
+    //         }
+
+    //         DB::commit();
+
+    //         // Create API token
+    //         $token = $user->createToken('google-token')->plainTextToken;
+    //         $frontend = config('app.frontend.url', 'https://myracepics.com');
+
+    //         // Redirect Angular
+    //         if (!$user->role) {
+    //             return redirect()->to(
+    //                 "{$frontend}/auth/google/select-role?user_id={$user->id}&token={$token}"
+    //             );
+    //         }
+
+    //         return redirect()->to(
+    //             "{$frontend}/auth/google/callback?user_id={$user->id}&token={$token}"
+    //         );
+
+    //     } catch (\Throwable $e) {
+    //         DB::rollBack();
+    //         Log::error('Google Save Error', [
+    //             'error' => $e->getMessage(),
+    //             'trace' => $e->getTraceAsString(),
+    //         ]);
+
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 
     
     public function setGoogleRole(Request $request)
