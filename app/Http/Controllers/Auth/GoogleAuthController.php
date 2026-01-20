@@ -87,8 +87,7 @@ class GoogleAuthController extends Controller
 
             // Create API token
             $token = $user->createToken('google-token')->plainTextToken;
-            $frontend = rtrim(config('app.frontend_url'), '/');
-
+            $frontend = config('app.frontend.url', 'https://myracepics.com');
 
             // Redirect Angular
             if (!$user->role) {
@@ -97,7 +96,9 @@ class GoogleAuthController extends Controller
                 );
             }
 
-           return redirect()->to("{$frontend}/auth/google/callback?user_id={$user->id}&token={$token}");
+            return redirect()->to(
+                "{$frontend}/auth/google/callback?user_id={$user->id}&token={$token}"
+            );
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -166,5 +167,5 @@ class GoogleAuthController extends Controller
         }
     }
 
-
+    
 }
