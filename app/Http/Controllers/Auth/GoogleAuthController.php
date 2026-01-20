@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Log;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class GoogleAuthController extends Controller
 {
@@ -114,77 +115,91 @@ class GoogleAuthController extends Controller
         }
     }
 
-    
-    public function setGoogleRole(Request $request)
-    {
-        // Validate
-        $request->validate([
-            'role'  => 'required|in:runner,photographer',
-        ]);
+public function setGoogleRole(Request $request)
+{
+    // Validate role
+    $request->validate([
+        'role' => 'required|in:runner,photographer',
+    ]);
 
-        try {
-            // Get user from token instead of user_id
-            $token = $request->bearerToken() ?? $request->query('token');
-            if (!$token) {
-                return response()->json(['success' => false, 'message' => 'Missing token.'], 401);
-            }
+    try {
+        // Get token from query string
+        $tokenValue = $request->query('token');
+        if (!$tokenValue) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing token.'
+            ], 401);
+        }
 
-            $user = auth()->guard('sanctum')->user();
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'Invalid token.'], 401);
-            }
+        // Find the user associated with this token
+        $accessToken = PersonalAccessToken::findToken($tokenValue);
+        if (!$accessToken) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid token.'
+            ], 401);
+        }
 
-            // If role exists, cannot update
-            if ($user->role) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Role already exists.',
-                    'current_role' => $user->role,
-                ], 400);
-            }
+        $user = $accessToken->tokenable; // authenticated user
 
-            $roleCodeMap = [
-                'runner'       => 'DEF-USERS',
-                'photographer' => 'DEF-PHOTOGRAPHER',
-            ];
+        // Check if user already has a role
+        if ($user->role) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Role already exists.',
+                'current_role' => $user->role
+            ], 400);
+        }
 
-            // Transaction to update user & resource
-            DB::transaction(function () use ($user, $request, $roleCodeMap) {
-                $user->update([
+        $roleCodeMap = [
+            'runner'       => 'DEF-USERS',
+            'photographer' => 'DEF-PHOTOGRAPHER',
+        ];
+
+        // Use transaction to update user and resource
+        DB::transaction(function () use ($user, $request, $roleCodeMap) {
+            // Update user
+            $user->update([
+                'role'      => $request->role,
+                'role_code' => $roleCodeMap[$request->role],
+            ]);
+
+            // Update Resource profile
+            $resource = Resource::where('code', $user->code)->first();
+            if ($resource) {
+                $resource->update([
                     'role'      => $request->role,
                     'role_code' => $roleCodeMap[$request->role],
                 ]);
+            }
+        });
 
-                $resource = Resource::where('code', $user->code)->first();
-                if ($resource) {
-                    $resource->update([
-                        'role'      => $request->role,
-                        'role_code' => $roleCodeMap[$request->role],
-                    ]);
-                }
-            });
+        // Generate redirect URL for Angular
+        $frontend = config('app.frontend.url', 'http://localhost:4200');
+        $redirectUrl = match ($request->role) {
+            'runner' => "{$frontend}/runner/allevents?token={$tokenValue}",
+            'photographer' => "{$frontend}/photographer/allevents?token={$tokenValue}",
+        };
 
-            // Redirect Angular after role selection
-            $frontend = config('app.frontend.url', 'http://localhost:4200');
-            $redirectUrl = match ($request->role) {
-                'runner' => "{$frontend}/runner/allevents?token={$token}",
-                'photographer' => "{$frontend}/photographer/allevents?token={$token}",
-            };
+        return response()->json([
+            'success' => true,
+            'message' => 'Role assigned successfully.',
+            'redirect_url' => $redirectUrl
+        ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Role assigned successfully.',
-                'redirect_url' => $redirectUrl,
-            ]);
+    } catch (\Throwable $e) {
+        Log::error('Set Google role error: '.$e->getMessage(), [
+            'token' => $request->query('token'),
+            'role' => $request->role,
+        ]);
 
-        } catch (\Throwable $e) {
-            Log::error('Set Google role error: '.$e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to set role.',
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to set role.'
+        ], 500);
     }
+}
 
     // public function setGoogleRole(Request $request)
     // {
