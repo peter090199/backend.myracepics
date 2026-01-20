@@ -125,6 +125,118 @@ class GoogleAuthController extends Controller
     {
         try {
             // Check if Google sent 'code'
+            $code = $request->query('code');
+            if (!$code) {
+                throw new \Exception('Missing authorization code from Google.');
+            }
+
+            DB::beginTransaction();
+
+            // Get Google user securely
+            $googleUser = Socialite::driver('google')->stateless()->user();
+
+            if (!$googleUser || !$googleUser->getId() || !$googleUser->getEmail()) {
+                throw new \Exception('Failed to retrieve Google user information.');
+            }
+
+            // Check if user already exists by google_id or email
+            $user = User::where('google_id', $googleUser->getId())
+                ->orWhere('email', $googleUser->getEmail())
+                ->first();
+
+            if (!$user) {
+                // Generate unique numeric code for user/resource
+                do {
+                    $newCode = max(
+                        User::max('code') ?? 700,
+                        Resource::max('code') ?? 700
+                    ) + 1;
+                } while (
+                    User::where('code', $newCode)->exists() ||
+                    Resource::where('code', $newCode)->exists()
+                );
+
+                // Create secure random password (never hardcode)
+                $securePassword = bin2hex(random_bytes(8)); // 16 chars
+
+                // Create user
+                $user = User::create([
+                    'fname'       => $googleUser->getName(),
+                    'lname'       => null,
+                    'fullname'    => $googleUser->getName(),
+                    'email'       => $googleUser->getEmail(),
+                    'google_id'   => $googleUser->getId(),
+                    'password'    => Hash::make($securePassword),
+                    'code'        => $newCode,
+                    'is_online'   => true,
+                    'role'        => null,
+                    'role_code'   => null,
+                ]);
+
+                // Create resource
+                Resource::create([
+                    'code'       => $newCode,
+                    'fname'      => $googleUser->getName(),
+                    'lname'      => null,
+                    'fullname'   => $googleUser->getName(),
+                    'email'      => $googleUser->getEmail(),
+                    'role'       => null,
+                    'role_code'  => null,
+                    'coverphoto' => 'default.jpg',
+                ]);
+            } else {
+                // Existing user → mark online
+                $user->update(['is_online' => true]);
+            }
+
+            DB::commit();
+
+            // Create API token (Laravel Sanctum)
+            $token = $user->createToken('google-token')->plainTextToken;
+
+            // Angular frontend URL
+            $frontend = config('app.frontend.url', 'https://myracepics.com');
+
+            // ROLE-BASED REDIRECTION
+            if (!$user->role) {
+                // No role yet → redirect to role selection page
+                return redirect()->to(
+                    "{$frontend}/auth/google/select-role?user_id={$user->id}&token={$token}"
+                );
+            }
+
+            // Redirect to role-specific Angular route
+            switch ($user->role) {
+                case 'runner':
+                    return redirect()->to("{$frontend}/runner/allevents?user_id={$user->id}&token={$token}");
+                case 'photographer':
+                    return redirect()->to("{$frontend}/photographer/allevents?user_id={$user->id}&token={$token}");
+                default:
+                    // Fallback: invalid role → force role selection
+                    return redirect()->to("{$frontend}/auth/google/select-role?user_id={$user->id}&token={$token}");
+            }
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Google OAuth Callback Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $user->id ?? null,
+                'google_email' => $googleUser->getEmail() ?? null,
+            ]);
+
+            // Return generic error to avoid exposing internal details
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Google authentication failed. Please try again.'
+            ], 500);
+        }
+    }
+
+    public function handleGoogleCallbackx1(Request $request)
+    {
+        try {
+            // Check if Google sent 'code'
             if (!$request->has('code')) {
                 throw new \Exception('Missing authorization code from Google');
             }
