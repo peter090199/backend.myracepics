@@ -12,7 +12,7 @@ use Laravel\Socialite\Facades\Socialite;
 use App\Models\Userprofile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Auth\DB;
+use DB;
 
 class GoogleAuthController extends Controller
 {
