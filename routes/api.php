@@ -70,12 +70,9 @@
     Route::post('register',[RegisterController::class,'register'])->name('register');
 
     Route::post('accountactivation',[RegisterController::class,'accountactivation'])->name('accountactivation');
-
     Route::post('send-message', function (Request $request) {
     $message = $request->input('message');
-
     event(new MessageSent($message)); // ✅ Corrected event class name
-
     return response()->json(['success' => true, 'message' => $message]);
     });
 
@@ -90,14 +87,9 @@
     Route::middleware('auth:api')->post('/profile/broadcasting/auth', function () {
     return Broadcast::auth(request());
     });
-
-
-
     
     // PROTECTED ROUTES
     Route::middleware(['auth:sanctum','checkstatus'])->group(function () {
-    Route::get('user', function (Request $request) {return $request->user();});
-
     //accessmenu
     Route::Resource('accessmenu',AccessrolemenuController::class)->names('accessmenu');
     Route::post('saveAccessMenu', [SecurityroleController::class, 'saveAccessMenu']);
