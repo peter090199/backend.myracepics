@@ -61,6 +61,7 @@
 
     Route::get("auth/google",[GoogleAuthController::class,"redirectToGoogle"])->name("redirect.google");
     Route::get("auth/google/callback",[GoogleAuthController::class,"handleGoogleCallback"]);
+    Route::post('auth/google/set-role', [GoogleAuthController::class, 'setGoogleRole']);
 
 
 
