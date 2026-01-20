@@ -22,23 +22,23 @@ class GoogleAuthController extends Controller
     }
 
     // Step 2: Handle callback
-     public function handleGoogleCallback(Request $request)
+    public function handleGoogleCallback(Request $request)
     {
         try {
+            // Get user info from Google
             $googleUser = Socialite::driver('google')->stateless()->user();
 
-            // Check if user exists
-            $user = User::where('email', $googleUser->getEmail())->first();
+            // Make sure User model has these fields fillable:
+            // 'fname', 'email', 'password', 'code'
 
-            if (!$user) {
-                // If not, create new user
-                $user = User::create([
-                    'fname' => $googleUser->getName(),
-                    'email' => $googleUser->getEmail(),
+            $user = User::firstOrCreate(
+                ['email' => $googleUser->getEmail()], // match existing user by email
+                [
+                    'fname' => $googleUser->getName() ?? 'No Name', // use 'No Name' if null
                     'password' => bcrypt(Str::random(16)), // random password
-                    'code' => $googleUser->getId(),
-                ]);
-            }
+                    'code' => $googleUser->getId(), // store Google ID
+                ]
+            );
 
             // Generate API token for Angular
             $token = $user->createToken('API Token')->plainTextToken;
@@ -49,7 +49,10 @@ class GoogleAuthController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Unable to login using Google.'], 500);
+            return response()->json([
+                'error' => 'Unable to login using Google.',
+                'message' => $e->getMessage() // return real error for debugging
+            ], 500);
         }
     }
 
