@@ -25,21 +25,20 @@ class GoogleAuthController extends Controller
     public function handleGoogleCallback(Request $request)
     {
         try {
-            // Get user info from Google
+            // Get Google user
             $googleUser = Socialite::driver('google')
                 ->stateless()
                 ->user();
 
-            // Find existing user
+            // Find or create user
             $user = User::where('email', $googleUser->getEmail())->first();
 
-            // Create user if not exists
             if (!$user) {
                 $user = User::create([
                     'name'      => $googleUser->getName(),
                     'email'     => $googleUser->getEmail(),
                     'password'  => bcrypt(Str::random(16)),
-                    'role_code' => 'DEF-USERS',
+                    'role_code' => 'DEF-RUNNER',
                     'is_online' => true,
                     'code'      => Str::upper(Str::random(8)),
                 ]);
@@ -49,13 +48,11 @@ class GoogleAuthController extends Controller
                 ]);
             }
 
-            // Delete old tokens (Sanctum)
+            // Clear old tokens (Sanctum)
             $user->tokens()->delete();
 
             // Update online status
-            $user->update([
-                'is_online' => true,
-            ]);
+            $user->update(['is_online' => true]);
 
             // Create new token
             $token = $user->createToken('Personal Access Token')->plainTextToken;
@@ -70,20 +67,28 @@ class GoogleAuthController extends Controller
 
             $roleName = $roleMap[$user->role_code] ?? 'unknown';
 
-            // Check profile
-            $userProfileExists = Userprofile::where('code', $user->code)->exists();
+            // Profile check
+            $profileExists = Userprofile::where('code', $user->code)->exists();
 
-            // Message flag logic
+            // Message flag
             $messageFlag = (
                 $user->role_code === 'DEF-PHOTOGRAPHER' ||
                 in_array($user->role_code, ['DEF-ADMIN', 'DEF-MASTERADMIN']) ||
-                ($user->role_code === 'DEF-USERS' && $userProfileExists)
+                ($user->role_code === 'DEF-USERS' && $profileExists)
             ) ? 0 : 1;
 
-            // Redirect back to Angular with token
+            // Get intended redirect from session
+            $redirectPath = session()->pull('google_redirect', '/dashboard');
+
+            // Security: allow only internal paths
+            if (!Str::startsWith($redirectPath, '/')) {
+                $redirectPath = '/dashboard';
+            }
+
+            // Final redirect to Angular
             return redirect()->away(
-                config('app.frontend_url') .
-                '/auth/google-success?' .
+                rtrim(config('app.frontend_url'), '/') .
+                $redirectPath . '?' .
                 http_build_query([
                     'token'     => $token,
                     'role'      => $roleName,
@@ -96,11 +101,10 @@ class GoogleAuthController extends Controller
             return redirect()->away(
                 config('app.frontend_url') .
                 '/auth/google-error?error=' .
-                urlencode($e->getMessage())
+                urlencode('Google login failed')
             );
         }
     }
-
 
     
 }
