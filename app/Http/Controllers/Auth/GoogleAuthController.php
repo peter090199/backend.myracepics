@@ -301,15 +301,15 @@ class GoogleAuthController extends Controller
             //$frontend = config('app.frontend.url', 'http://myracepics.com/');
 
             // // Redirect Angular
-            // if (!$user->role) {
-            //     return redirect()->to(
-            //         "{$frontend}/auth/google/select-role?user_id={$user->id}&token={$token}"
-            //     );
-            // }
+            if (!$user->role) {
+                return redirect()->to(
+                    "{$frontend}/auth/google/select-role?user_id={$user->id}&token={$token}"
+                );
+            }
 
-            return redirect()->to(
-                "{$frontend}/auth/google/callback?user_id={$user->id}&token={$token}"
-            );
+            // return redirect()->to(
+            //     "{$frontend}/auth/google/callback?user_id={$user->id}&token={$token}"
+            // );
 
         } catch (\Throwable $e) {
             DB::rollBack();
