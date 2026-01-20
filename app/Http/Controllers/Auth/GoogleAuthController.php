@@ -297,7 +297,8 @@ class GoogleAuthController extends Controller
 
             // Create API token
             $token = $user->createToken('google-token')->plainTextToken;
-            $frontend = config('app.frontend.url', 'https://localhost:4200');
+            $frontend = config('app.frontend.url', 'http://localhost:4200');
+            //$frontend = config('app.frontend.url', 'http://myracepics.com/');
 
             // // Redirect Angular
             // if (!$user->role) {
