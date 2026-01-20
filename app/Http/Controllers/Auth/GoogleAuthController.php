@@ -60,7 +60,7 @@ class GoogleAuthController extends Controller
                     'fullname'    => $googleUser->getName(),
                     'email'       => $googleUser->getEmail(),
                     'google_id'   => $googleUser->getId(),
-                    'password'    => Hash::make(Str::random(16)),
+                    'password'    => Hash::make('Myracepics123@'),
                     'code'        => $newCode,
                     'is_online'   => true,
                     'role'        => null,
