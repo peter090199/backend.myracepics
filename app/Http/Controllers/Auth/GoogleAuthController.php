@@ -26,6 +26,88 @@ class GoogleAuthController extends Controller
     {
         try {
             // 🔑 Get Google user (stateless for API / Angular)
+            $googleUser = Socialite::driver('google')->stateless()->user();
+
+            // Check if user already exists by Google ID or email
+            $user = User::where('google_id', $googleUser->id)
+                        ->orWhere('email', $googleUser->email)
+                        ->first();
+
+            if (!$user) {
+                DB::beginTransaction();
+
+                // Generate unique code across users and resources
+                do {
+                    $newCode = (max(User::max('code') ?? 700, Resource::max('code') ?? 700)) + 1;
+                } while (User::where('code', $newCode)->exists() || Resource::where('code', $newCode)->exists());
+
+                // Default role for Google signup (you can change this or ask user later)
+                $role = 'runner'; // default, or choose logic to assign
+                $roleCodeMap = [
+                    'runner'       => 'DEF-USERS',
+                    'photographer' => 'DEF-PHOTOGRAPHER',
+                ];
+                $roleCode = $roleCodeMap[$role];
+
+                // Create new User
+                $user = User::create([
+                    'fname'              => $googleUser->name,
+                    'lname'              => null,
+                    'fullname'           => $googleUser->name,
+                    'email'              => $googleUser->email,
+                    'google_id'          => $googleUser->id,
+                    'google_token'       => $googleUser->token,
+                    'google_refresh_token' => $googleUser->refreshToken,
+                    'password'           => Hash::make(Str::random(16)), // random password
+                    'code'               => $newCode,
+                    'role'               => $role,
+                    'role_code'          => $roleCode,
+                    'is_online'          => false,
+                ]);
+            
+                // Create Resource profile
+                Resource::create([
+                    'code'       => $newCode,
+                    'fname'      => $googleUser->name,
+                    'lname'      => null,
+                    'fullname'   => $googleUser->name,
+                    'email'      => $googleUser->email,
+                    'role'       => $role,
+                    'role_code'  => $roleCode,
+                    'coverphoto' => 'default.jpg',
+                ]);
+
+                DB::commit();
+            }
+
+            // ✅ Create API token for Angular
+            $token = $user->createToken('google-token')->plainTextToken;
+
+            // ✅ Redirect to Angular with token
+            $angularUrl = config('app.frontend.url') ?? 'http://localhost:4200';
+            return redirect()->to($angularUrl . "/auth/google/callback?token={$token}&user_id={$user->id}");
+
+        } catch (\Throwable $e) {
+            DB::rollBack(); // rollback if something failed
+
+            // Log error
+            Log::error('Google Callback Error', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
+            // Return error view
+            return view('auth.google-error', [
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+
+    public function handleGoogleCallback11(Request $request)
+    {
+        try {
+            // 🔑 Get Google user (stateless for API / Angular)
             $googleUser = Socialite::driver('google')
                 ->stateless()
                 ->user();
@@ -51,7 +133,7 @@ class GoogleAuthController extends Controller
             // ✅ Return Blade view with user info
              $angularUrl = config('app.frontend.url') ?? 'http://localhost:4200'; 
             return redirect()->to($angularUrl . "/auth/google/callback?token={$token}&user_id={$user->id}");
-            
+
           //  return view('auth.google-success', compact('user', 'token'));
 
         } catch (\Exception $e) {
