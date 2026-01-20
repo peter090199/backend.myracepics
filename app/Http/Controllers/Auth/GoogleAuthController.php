@@ -12,6 +12,7 @@ use Laravel\Socialite\Facades\Socialite;
 use App\Models\Userprofile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Auth\DB;
 
 class GoogleAuthController extends Controller
 {
@@ -64,7 +65,7 @@ class GoogleAuthController extends Controller
                     'role_code'          => $roleCode,
                     'is_online'          => false,
                 ]);
-            
+
                 // Create Resource profile
                 Resource::create([
                     'code'       => $newCode,
