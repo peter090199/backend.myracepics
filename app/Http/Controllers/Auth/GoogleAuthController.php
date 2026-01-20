@@ -96,9 +96,7 @@ class GoogleAuthController extends Controller
                 );
             }
 
-            return redirect()->to(
-                "{$frontend}/auth/google/callback?user_id={$user->id}&token={$token}"
-            );
+           return redirect()->to("{$frontend}/auth/google/callback?user_id={$user->id}&token={$token}");
 
         } catch (\Throwable $e) {
             DB::rollBack();
