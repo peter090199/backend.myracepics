@@ -178,14 +178,14 @@ class GoogleAuthController extends Controller
                 $user->update(['is_online' => true]);
             }
 
-            DB::commit();
-        //    $frontend = config('app.frontend.url', 'https://myracepics.com');
-        //     // Redirect Angular
-        //     if (!$user->role) {
-        //         return redirect()->to(
-        //             "{$frontend}/auth/google/select-role?user_id={$user->id}"
-        //         );
-        //     }
+           DB::commit();
+           $frontend = config('app.frontend.url', 'https://myracepics.com');
+            // Redirect Angular
+            if (!$user->role) {
+                return redirect()->to(
+                    "{$frontend}/auth/google/select-role?user_id={$user->id}"
+                );
+            }
 
             $token = $user->createToken('google-token')->plainTextToken;
             return redirect()->away(config('app.frontend_url') ."/auth/google/callback?" .http_build_query([
@@ -212,7 +212,6 @@ class GoogleAuthController extends Controller
         }
     }
 
-    
     public function setGoogleRole(Request $request)
     {
         $request->validate([
@@ -221,48 +220,114 @@ class GoogleAuthController extends Controller
         ]);
 
         try {
-            $user = User::findOrFail($request->user_id);
+            DB::beginTransaction();
+
+            $user = User::lockForUpdate()->findOrFail($request->user_id);
 
             $roleCodeMap = [
                 'runner'       => 'DEF-USERS',
                 'photographer' => 'DEF-PHOTOGRAPHER',
             ];
 
-          //  $token = $user->createToken('google-token')->plainTextToken;
-            DB::transaction(function () use ($user, $request, $roleCodeMap) {
-                // Update user role
-                $user->update([
+            // ✅ Update user role
+            $user->update([
+                'role'      => $request->role,
+                'role_code' => $roleCodeMap[$request->role],
+                'is_online' => true,
+            ]);
+
+            // ✅ Update resource profile
+            $resource = Resource::where('code', $user->code)->lockForUpdate()->first();
+            if ($resource) {
+                $resource->update([
                     'role'      => $request->role,
                     'role_code' => $roleCodeMap[$request->role],
                 ]);
+            }
 
-                // Update Resource profile
-                $resource = Resource::where('code', $user->code)->first();
-                if ($resource) {
-                    $resource->update([
-                        'role'      => $request->role,
-                        'role_code' => $roleCodeMap[$request->role],
-                    ]);
-                }
-            });
+            DB::commit();
 
-            // Create API token for Angular
-            return response()->json([
-                'success' => true,
-                'message' => 'Role updated successfully.',
-                //'token'   => $token,
-               // 'user'    => $user,
-            ]);
+            // ✅ Create Sanctum token AFTER role is set
+            $token = $user->createToken('google-token')->plainTextToken;
+
+            // ✅ Frontend redirect URL
+            $frontend = config('app.frontend_url', 'https://myracepics.com');
+
+            // 🔁 Redirect back to Angular Google callback
+            return redirect()->away(
+                "{$frontend}/auth/google/callback?" . http_build_query([
+                    'token'   => $token,
+                    'role'    => $user->role,
+                    'user_id' => $user->id,
+                ])
+            );
 
         } catch (\Throwable $e) {
-            \Log::error('Set Google role error: '.$e->getMessage());
+            DB::rollBack();
+
+            \Log::error('Set Google role error', [
+                'error' => $e->getMessage(),
+            ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to set role. '.$e->getMessage(),
+                'message' => 'Failed to set role.',
             ], 500);
         }
     }
+
+
+    
+    // public function setGoogleRole(Request $request)
+    // {
+    //     $request->validate([
+    //         'user_id' => 'required|exists:users,id',
+    //         'role'    => 'required|in:runner,photographer',
+    //     ]);
+
+    //     try {
+    //         $user = User::findOrFail($request->user_id);
+
+    //         $roleCodeMap = [
+    //             'runner'       => 'DEF-USERS',
+    //             'photographer' => 'DEF-PHOTOGRAPHER',
+    //         ];
+
+    //       //  $token = $user->createToken('google-token')->plainTextToken;
+    //         DB::transaction(function () use ($user, $request, $roleCodeMap) {
+    //             // Update user role
+    //             $user->update([
+    //                 'role'      => $request->role,
+    //                 'role_code' => $roleCodeMap[$request->role],
+    //             ]);
+
+    //             // Update Resource profile
+    //             $resource = Resource::where('code', $user->code)->first();
+    //             if ($resource) {
+    //                 $resource->update([
+    //                     'role'      => $request->role,
+    //                     'role_code' => $roleCodeMap[$request->role],
+    //                 ]);
+    //             }
+    //         });
+
+    //         // Create API token for Angular
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Role updated successfully.',
+    //             //'token'   => $token,
+    //            // 'user'    => $user,
+    //         ]);
+
+    //     } catch (\Throwable $e) {
+    //         \Log::error('Set Google role error: '.$e->getMessage());
+
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to set role. '.$e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
     
 }
