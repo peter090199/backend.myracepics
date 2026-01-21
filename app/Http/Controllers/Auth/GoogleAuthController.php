@@ -138,15 +138,18 @@ class GoogleAuthController extends Controller
                 'photographer' => 'DEF-PHOTOGRAPHER',
             ];
 
-            // ✅ Update user role
+            // ✅ Update user
             $user->update([
                 'role'      => $request->role,
                 'role_code' => $roleCodeMap[$request->role],
                 'is_online' => true,
             ]);
 
-            // ✅ Update resource profile
-            $resource = Resource::where('code', $user->code)->lockForUpdate()->first();
+            // ✅ Update resource
+            $resource = Resource::where('code', $user->code)
+                ->lockForUpdate()
+                ->first();
+
             if ($resource) {
                 $resource->update([
                     'role'      => $request->role,
@@ -159,17 +162,13 @@ class GoogleAuthController extends Controller
             // ✅ Create Sanctum token AFTER role is set
             $token = $user->createToken('google-token')->plainTextToken;
 
-            // ✅ Frontend redirect URL
-            $frontend = config('app.frontend_url', 'https://myracepics.com');
-
-            // 🔁 Redirect back to Angular Google callback
-            return redirect()->away(
-                "{$frontend}/auth/google/callback?" . http_build_query([
-                    'token'   => $token,
-                    'role'    => $user->role,
-                    'user_id' => $user->id,
-                ])
-            );
+            // ✅ RETURN JSON (no redirect!)
+            return response()->json([
+                'success' => true,
+                'token'   => $token,
+                'role'    => $user->role,
+                'user_id' => $user->id,
+            ]);
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -184,6 +183,71 @@ class GoogleAuthController extends Controller
             ], 500);
         }
     }
+
+
+    // public function setGoogleRole(Request $request)
+    // {
+    //     $request->validate([
+    //         'user_id' => 'required|exists:users,id',
+    //         'role'    => 'required|in:runner,photographer',
+    //     ]);
+
+    //     try {
+    //         DB::beginTransaction();
+
+    //         $user = User::lockForUpdate()->findOrFail($request->user_id);
+
+    //         $roleCodeMap = [
+    //             'runner'       => 'DEF-USERS',
+    //             'photographer' => 'DEF-PHOTOGRAPHER',
+    //         ];
+
+    //         // ✅ Update user role
+    //         $user->update([
+    //             'role'      => $request->role,
+    //             'role_code' => $roleCodeMap[$request->role],
+    //             'is_online' => true,
+    //         ]);
+
+    //         // ✅ Update resource profile
+    //         $resource = Resource::where('code', $user->code)->lockForUpdate()->first();
+    //         if ($resource) {
+    //             $resource->update([
+    //                 'role'      => $request->role,
+    //                 'role_code' => $roleCodeMap[$request->role],
+    //             ]);
+    //         }
+
+    //         DB::commit();
+
+    //         // ✅ Create Sanctum token AFTER role is set
+    //         $token = $user->createToken('google-token')->plainTextToken;
+
+    //         // ✅ Frontend redirect URL
+    //         $frontend = config('app.frontend_url', 'https://backend.myracepics.com/public');
+
+    //         // 🔁 Redirect back to Angular Google callback
+    //         return redirect()->away(
+    //             "{$frontend}/auth/google/callback?" . http_build_query([
+    //                 'token'   => $token,
+    //                 'role'    => $user->role,
+    //                 'user_id' => $user->id,
+    //             ])
+    //         );
+
+    //     } catch (\Throwable $e) {
+    //         DB::rollBack();
+
+    //         \Log::error('Set Google role error', [
+    //             'error' => $e->getMessage(),
+    //         ]);
+
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to set role.',
+    //         ], 500);
+    //     }
+    // }
 
 
     
