@@ -303,7 +303,7 @@
     Route::get('events/getEventByUuid/{uuid}', [EventController::class, 'getEventByUuid']);
 
     //PROFILE   
-    Route::put('updateProfile', [ProfilepictureController::class, 'updateProfile']);
+    Route::post('updateProfile', [ProfilepictureController::class, 'updateProfile']);
 
 });
 
