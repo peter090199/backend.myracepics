@@ -161,7 +161,7 @@ class ProfilepictureController extends Controller
                 $logo = $request->file('logo');
                 $fileName = 'logo-' . time() . '.' . $logo->getClientOriginalExtension();
                 $path = $logo->storeAs('public/' . $roleCode . '/' . $code, $fileName);
-                $validated['brand_logo'] = url(str_replace('public', 'storage', $path));
+                $validated['logo'] = url(str_replace('public', 'storage', $path));
             }
 
             // Handle profile picture upload
@@ -169,7 +169,7 @@ class ProfilepictureController extends Controller
                 $pic = $request->file('profile_picture');
                 $fileName = 'profile-' . time() . '.' . $pic->getClientOriginalExtension();
                 $path = $pic->storeAs('public/' . $roleCode . '/' . $code, $fileName);
-                $validated['profile_pic'] = url(str_replace('public', 'storage', $path));
+                $validated['profile_picture'] = url(str_replace('public', 'storage', $path));
             }
 
             // Update user
