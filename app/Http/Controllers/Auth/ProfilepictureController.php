@@ -172,7 +172,7 @@ class ProfilepictureController extends Controller
             $logoname = 'logo';
             $relativePath = $roleCode . '/' . $code . '/' . $logoname . '/' . $fileName;
             Storage::disk('public')->put($relativePath, base64_decode($imageData));
-            $validated['logo'] = asset('storage/' . $relativePath);
+            $validated['logo'] = asset('storage/app/public/' . $relativePath);
         }
 
         // Handle profile_picture upload (base64)
@@ -225,7 +225,7 @@ class ProfilepictureController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $resource    // resource object
+            'data' => $user,       // user object
         ]);
     }
 
