@@ -304,7 +304,7 @@
 
     //PROFILE   
     //Route::put('updateProfile', [ProfilepictureController::class, 'updateProfile']);
-    Route::post('profile/update', [ProfilepictureController::class, 'updateProfile']);
+    Route::post('updateProfile', [ProfilepictureController::class, 'updateProfile']);
 });
 
   
