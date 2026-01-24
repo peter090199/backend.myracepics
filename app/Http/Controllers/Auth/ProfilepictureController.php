@@ -127,81 +127,83 @@ class ProfilepictureController extends Controller
         //
     }
 
-    public function updateProfile(Request $request)
+     public function updateProfile(Request $request)
     {
-        try {
-            $user = Auth::user();
+        // 🔥 Get authenticated user
+        $user = Auth::user();
 
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
-            }
-
-            if (empty($user->code)) {
-                return response()->json(['success' => false, 'message' => 'User code missing'], 400);
-            }
-
-            $code = $user->code;
-            $roleCode = $user->role_code;
-
-            // Validate request
-            $validated = $request->validate([
-                'fname' => 'sometimes|required|string|max:50',
-                'mname' => 'sometimes|nullable|string|max:50',
-                'lname' => 'sometimes|required|string|max:50',
-                'contact_no' => 'sometimes|nullable|string|max:20',
-                'current_location' => 'sometimes|nullable|string|max:100',
-                'date_birth' => 'sometimes|nullable|date',
-                'gender' => 'sometimes|nullable|string|max:20',
-                'textwatermak' => 'sometimes|nullable|string|max:50',
-                'logo' => 'sometimes|nullable|file|image|max:2048',
-                'profile_picture' => 'sometimes|nullable|file|image|max:2048',
-            ]);
-
-            // Handle logo upload
-            if ($request->hasFile('logo')) {
-                $logo = $request->file('logo');
-                $fileName = 'logo-' . time() . '.' . $logo->getClientOriginalExtension();
-                $path = $logo->storeAs('public/' . $roleCode . '/' . $code, $fileName);
-                $validated['logo'] = str_replace('public/', 'storage/', $path);
-            }
-
-            // Handle profile picture upload
-            if ($request->hasFile('profile_picture')) {
-                $pic = $request->file('profile_picture');
-                $fileName = 'profile-' . time() . '.' . $pic->getClientOriginalExtension();
-                $path = $pic->storeAs('public/' . $roleCode . '/' . $code, $fileName);
-                $validated['profile_picture'] = str_replace('public/', 'storage/', $path);
-            }
-
-            // Update user table
-            $userFields = ['fname','mname','lname','contact_no','current_location','date_birth','gender','textwatermak','logo','profile_picture'];
-            $userUpdate = array_intersect_key($validated, array_flip($userFields));
-            $user->update($userUpdate);
-
-            // Update resources table
-            $resource = Resource::where('code', $code)->first();
-            if ($resource) {
-                $resourceFields = ['fname','mname','lname','contact_no','current_location','date_birth','gender','textwatermak','logo','profile_picture'];
-                $resourceUpdate = array_intersect_key($validated, array_flip($resourceFields));
-                $resource->update($resourceUpdate);
-            } else {
-                \Log::warning("Resource with code {$code} not found, cannot update");
-            }
-
+        if (!$user) {
             return response()->json([
-                'success' => true,
-                'message' => 'Profile updated successfully',
-                'user' => $user
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Profile update failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json(['success' => false, 'message' => 'Server Error'], 500);
+                'success' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
         }
+
+        if (empty($user->code)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User code missing'
+            ], 400);
+        }
+
+        $code = $user->code;
+        $roleCode = $user->role_code;
+
+        // Validate input
+        $validated = $request->validate([
+            'fname' => 'sometimes|required|string|max:50',
+            'mname' => 'sometimes|nullable|string|max:50',
+            'lname' => 'sometimes|required|string|max:50',
+            'contact_no' => 'sometimes|nullable|string|max:20',
+            'current_location' => 'sometimes|nullable|string|max:100',
+            'date_birth' => 'sometimes|nullable|date',
+            'gender' => 'sometimes|nullable|string|max:20',
+            'textwatermak' => 'sometimes|nullable|string|max:50',
+            'logo' => 'sometimes|nullable|string', // base64 or URL
+            'profile_picture' => 'sometimes|nullable|string', // base64 or URL
+        ]);
+
+        // Handle logo upload (base64)
+        if (!empty($validated['logo'])) {
+            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['logo']);
+            $imageData = str_replace(' ', '+', $imageData);
+
+            $fileName = 'logo-' . time() . '.png';
+            $relativePath = $roleCode . '/' . $code . '/' . $fileName;
+            Storage::disk('public')->put($relativePath, base64_decode($imageData));
+            $validated['logo'] = asset('storage/' . $relativePath);
+        }
+
+        // Handle profile_picture upload (base64)
+        if (!empty($validated['profile_picture'])) {
+            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['profile_picture']);
+            $imageData = str_replace(' ', '+', $imageData);
+
+            $fileName = 'profile-' . time() . '.png';
+            $relativePath = $roleCode . '/' . $code . '/' . $fileName;
+            Storage::disk('public')->put($relativePath, base64_decode($imageData));
+            $validated['profile_picture'] = asset('storage/' . $relativePath);
+        }
+
+        // Update User table
+        $userFields = ['fname','mname','lname','contact_no','current_location','date_birth','gender','textwatermak','logo','profile_picture'];
+        $userUpdate = array_intersect_key($validated, array_flip($userFields));
+        $user->update($userUpdate);
+
+        // Update Resource table by code
+        $resource = Resource::where('code', $code)->first();
+        if ($resource) {
+            $resourceFields = ['fname','mname','lname','contact_no','current_location','date_birth','gender','textwatermak','logo','profile_picture'];
+            $resourceUpdate = array_intersect_key($validated, array_flip($resourceFields));
+            $resource->update($resourceUpdate);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'user' => $user,
+            'resource' => $resource ?? null
+        ]);
     }
 
     
