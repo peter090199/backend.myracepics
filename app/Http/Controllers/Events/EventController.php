@@ -50,7 +50,7 @@ class EventController extends Controller
             'image'     => json_encode($imagePath ? [$imagePath] : []),
             'user_id'   => $user->id, // recommended
         ]);
-
+        
         return response()->json([
             'success' => true,
             'message' => 'Event saved successfully',

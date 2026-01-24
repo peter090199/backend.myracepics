@@ -169,7 +169,8 @@ class ProfilepictureController extends Controller
             $imageData = str_replace(' ', '+', $imageData);
 
             $fileName = 'logo-' . time() . '.png';
-            $relativePath = $roleCode . '/' . $code . '/' . $fileName;
+            $logoname = 'logo';
+            $relativePath = $roleCode . '/' . $code . '/' . $logoname . '/' . $fileName;
             Storage::disk('public')->put($relativePath, base64_decode($imageData));
             $validated['logo'] = asset('storage/' . $relativePath);
         }
@@ -180,7 +181,8 @@ class ProfilepictureController extends Controller
             $imageData = str_replace(' ', '+', $imageData);
 
             $fileName = 'profile-' . time() . '.png';
-            $relativePath = $roleCode . '/' . $code . '/' . $fileName;
+             $profilename = 'profilepic';
+            $relativePath = $roleCode . '/' . $code . '/' .  $profilename . '/' . $fileName;
             Storage::disk('public')->put($relativePath, base64_decode($imageData));
             $validated['profile_picture'] = asset('storage/' . $relativePath);
         }
