@@ -128,64 +128,62 @@ class ProfilepictureController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
 
-        if (empty($user->code)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot update profile: user code is missing.',
-            ], 400);
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+            }
+
+            if (empty($user->code)) {
+                return response()->json(['success' => false, 'message' => 'User code missing'], 400);
+            }
+
+            $code = $user->code;
+            $roleCode = $user->role_code;
+
+            $validated = $request->validate([
+                'fname' => 'required|string|max:50',
+                'mname' => 'nullable|string|max:50',
+                'lname' => 'required|string|max:50',
+                'contact_no' => 'nullable|string|max:20',
+                'current_location' => 'nullable|string|max:100',
+                'date_birth' => 'nullable|date',
+                'gender' => 'nullable|string|max:20',
+                'textwatermak' => 'nullable|string|max:50',
+                'logo' => 'nullable|file|image|max:2048',
+                'profile_picture' => 'nullable|file|image|max:2048',
+            ]);
+
+            $user->update($validated);
+
+            if ($request->hasFile('logo')) {
+                $logo = $request->file('logo');
+                $fileName = 'logo-' . time() . '_' . $logo->getClientOriginalName();
+                $relativePath = $roleCode . '/' . $code . '/' . $fileName;
+                $logo->storeAs('public/' . $roleCode . '/' . $code, $fileName);
+                $user->brand_logo = asset('storage/' . $relativePath);
+            }
+
+            if ($request->hasFile('profile_picture')) {
+                $pic = $request->file('profile_picture');
+                $fileName = 'profile-' . time() . '_' . $pic->getClientOriginalName();
+                $relativePath = $roleCode . '/' . $code . '/' . $fileName;
+                $pic->storeAs('public/' . $roleCode . '/' . $code, $fileName);
+                $user->profile_pic = asset('storage/' . $relativePath);
+            }
+
+            $user->save();
+
+            return response()->json(['success' => true, 'message' => 'Profile updated', 'user' => $user]);
+
+        } catch (\Exception $e) {
+            \Log::error('Profile update failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => 'Server Error'], 500);
         }
-
-        $code = $user->code;
-        $roleCode = $user->role_code;
-
-        // 🔹 Validate text fields (files optional)
-        $validated = $request->validate([
-            'fname'           => 'required|string|max:50',
-            'mname'           => 'nullable|string|max:50',
-            'lname'           => 'required|string|max:50',
-            'contact_no'      => 'nullable|string|max:20',
-            'current_location'=> 'nullable|string|max:100',
-            'date_birth'      => 'nullable|date',
-            'gender'          => 'nullable|string|max:20',
-            'textwatermak'    => 'nullable|string|max:50',
-            'logo'            => 'nullable|file|image|max:2048',          // File object
-            'profile_picture' => 'nullable|file|image|max:2048',          // File object
-        ]);
-
-        // 🔹 Update text fields
-        $user->update($validated);
-
-        // 🔹 Handle logo file upload
-        if ($request->hasFile('logo')) {
-            $logo = $request->file('logo');
-            $fileName = 'logo-' . time() . '_' . $logo->getClientOriginalName();
-            $relativePath = $roleCode . '/' . $code . '/' . $fileName;
-
-            $logo->storeAs('public/' . $roleCode . '/' . $code, $fileName);
-            $user->brand_logo = asset('storage/' . $relativePath);
-        }
-
-        // 🔹 Handle profile picture upload
-        if ($request->hasFile('profile_picture')) {
-            $pic = $request->file('profile_picture');
-            $fileName = 'profile-' . time() . '_' . $pic->getClientOriginalName();
-            $relativePath = $roleCode . '/' . $code . '/' . $fileName;
-
-            $pic->storeAs('public/' . $roleCode . '/' . $code, $fileName);
-            $user->profile_pic = asset('storage/' . $relativePath);
-        }
-
-        // 🔹 Save changes
-        $user->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Profile updated successfully',
-            'user'    => $user,
-        ]);
     }
+
+
     public function destroy(string $id)
     {
         //
