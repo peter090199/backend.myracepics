@@ -225,7 +225,7 @@ class ProfilepictureController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $user,       // user object
+            'data' => $resource,      
         ]);
     }
 
