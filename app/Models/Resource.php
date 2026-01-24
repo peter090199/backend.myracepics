@@ -49,7 +49,9 @@ class Resource extends Model
         'logo',
         'textwatermak',
         'profile_picture',
-        'gender'
+        'gender',
+        'current_location',
+        'date_birth'
     ];
 
 
