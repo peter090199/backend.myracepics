@@ -174,9 +174,13 @@ class ProfilepictureController extends Controller
             $resourceUpdate = array_intersect_key($validated, array_flip($resourceFields));
             $resource->update($resourceUpdate);
         }
+
         return response()->json([
             'success' => true,
             'message' => 'Images updated successfully',
+            'logo_url' => $user->logo,
+            'profile_picture_url' => $user->profile_picture
+               
         ]);
     }
 
