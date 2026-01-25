@@ -307,6 +307,8 @@
     Route::post('updateProfile', [ProfilepictureController::class, 'updateProfile']);
     Route::post('updateImage', [ProfilepictureController::class, 'updateImage']);
     Route::get('getProfile', [ProfilepictureController::class, 'getProfile']);
+
+    
 });
 
   
