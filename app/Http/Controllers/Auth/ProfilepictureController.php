@@ -186,8 +186,6 @@ class ProfilepictureController extends Controller
          return response()->json([
             'success' => true,
             'message' => 'Images updated successfully',
-            'logo_url' => $resource->logo,
-            'profile_picture_url' => $resource->profile_picture
         ]);
     }
 
