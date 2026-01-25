@@ -129,79 +129,119 @@ class ProfilepictureController extends Controller
 
     public function updateImage(Request $request)
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
 
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated'
-            ], 401);
-        }
-
-        if (empty($user->code)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User code missing'
-            ], 400);
-        }
-
-        // ✅ Validate BASE64 strings
-        $validated = $request->validate([
-            'logo' => 'sometimes|nullable|string',
-            'profile_picture' => 'sometimes|nullable|string',
-        ]);
-
-        $code = $user->code;
-        $roleCode = $user->role_code;
-
-        /* ================= LOGO (BASE64) ================= */
-        if (!empty($validated['logo'])) {
-
-            // delete old logo
-            if ($user->logo && Storage::disk('public')->exists($user->logo)) {
-                Storage::disk('public')->delete($user->logo);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated'
+                ], 401);
             }
 
-            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['logo']);
-            $imageData = str_replace(' ', '+', $imageData);
-
-            $fileName = 'logo-' . time() . '.png';
-            $relativePath = "$roleCode/$code/logo/$fileName";
-
-            Storage::disk('public')->put($relativePath, base64_decode($imageData));
-
-            $user->logo = $relativePath;
-        }
-
-        /* ============ PROFILE PICTURE (BASE64) ============ */
-        if (!empty($validated['profile_picture'])) {
-
-            // delete old profile picture
-            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
-                Storage::disk('public')->delete($user->profile_picture);
+            if (empty($user->code)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User code missing'
+                ], 400);
             }
 
-            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['profile_picture']);
-            $imageData = str_replace(' ', '+', $imageData);
+            $request->validate([
+                'logo' => 'nullable|string',
+                'profile_picture' => 'nullable|string',
+            ]);
 
-            $fileName = 'profile-' . time() . '.png';
-            $relativePath = "$roleCode/$code/profilepic/$fileName";
+            $code = $user->code;
+            $roleCode = $user->role_code;
 
-            Storage::disk('public')->put($relativePath, base64_decode($imageData));
+            /* ================= LOGO ================= */
+            if ($request->filled('logo')) {
 
-            $user->profile_picture = $relativePath;
+                $image = $request->logo;
+
+                if (!preg_match('/^data:image\/(\w+);base64,/', $image, $type)) {
+                    return response()->json(['message' => 'Invalid logo format'], 422);
+                }
+
+                $image = substr($image, strpos($image, ',') + 1);
+                $image = base64_decode($image);
+
+                if ($image === false) {
+                    return response()->json(['message' => 'Logo decode failed'], 422);
+                }
+
+                // delete old
+                if ($user->logo && Storage::disk('public')->exists($user->logo)) {
+                    Storage::disk('public')->delete($user->logo);
+                }
+
+                $dir = "$roleCode/$code/logo";
+                Storage::disk('public')->makeDirectory($dir);
+
+                $fileName = 'logo-' . time() . '.png';
+                $path = "$dir/$fileName";
+
+                Storage::disk('public')->put($path, $image);
+                $user->logo = $path;
+            }
+
+            /* ============ PROFILE PICTURE ============ */
+            if ($request->filled('profile_picture')) {
+
+                $image = $request->profile_picture;
+
+                if (!preg_match('/^data:image\/(\w+);base64,/', $image, $type)) {
+                    return response()->json(['message' => 'Invalid profile picture format'], 422);
+                }
+
+                $image = substr($image, strpos($image, ',') + 1);
+                $image = base64_decode($image);
+
+                if ($image === false) {
+                    return response()->json(['message' => 'Profile picture decode failed'], 422);
+                }
+
+                if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+                    Storage::disk('public')->delete($user->profile_picture);
+                }
+
+                $dir = "$roleCode/$code/profilepic";
+                Storage::disk('public')->makeDirectory($dir);
+
+                $fileName = 'profile-' . time() . '.png';
+                $path = "$dir/$fileName";
+
+                Storage::disk('public')->put($path, $image);
+                $user->profile_picture = $path;
+            }
+
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'logo_url' => $user->logo ? asset('storage/' . $user->logo) : null,
+                'profile_picture_url' => $user->profile_picture
+                    ? asset('storage/' . $user->profile_picture)
+                    : null
+            ]);
+
+        } catch (\Exception $e) {
+
+            Log::error('Image Upload Error', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Server error',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $user->save();
-
-        return response()->json([
-            'success' => true,
-            'logo_url' => $user->logo ? asset('storage/' . $user->logo) : null,
-            'profile_picture_url' => $user->profile_picture
-                ? asset('storage/' . $user->profile_picture)
-                : null
-        ]);
     }
+
+
      public function updateProfile(Request $request)
     {
         // 🔥 Get authenticated user
