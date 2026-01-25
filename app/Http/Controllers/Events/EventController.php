@@ -236,72 +236,72 @@ class EventController extends Controller
     }
 
   
-    public function upload(Request $request, $uuid)
+  public function upload(Request $request, $uuid)
 {
-    try {
-        $user = Auth::user();
-        if (!$user) return response()->json(['success'=>false,'message'=>'Unauthenticated'],401);
-        if (empty($user->code)) return response()->json(['success'=>false,'message'=>'User code missing'],400);
+    // 🔥 Get authenticated user
+    $user = Auth::user();
 
-        $roleCode = $user->role_code;
-        $userCode = $user->code;
+    if (!$user) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthenticated'
+        ], 401);
+    }
 
-        $validated = $request->validate([
-            'photos'=>'required|array',
-            'photos.*'=>'required|string',
-        ]);
+    if (empty($user->code)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'User code missing'
+        ], 400);
+    }
 
-        $uploadedFiles = [];
+    $code = $user->code;
+    $roleCode = $user->role_code;
 
-        foreach ($validated['photos'] as $index => $base64) {
-            $imageData = preg_replace('#^data:image/\w+;base64,#i','',$base64);
-            $imageData = str_replace(' ','+',$imageData);
+    // Validate input
+    $validated = $request->validate([
+        'photos' => 'required|array',
+        'photos.*' => 'required|string', // base64 strings
+    ]);
 
-            $decoded = base64_decode($imageData,true);
-            if ($decoded===false){
-                return response()->json(['success'=>false,'message'=>"Photo #$index is not valid base64"],400);
-            }
+    $uploadedFiles = [];
 
-            $fileName = 'photo-'.time().'-'.Str::random(5).'.png';
-            $relativeOriginal = "$roleCode/$userCode/events/$uuid/original/$fileName";
-            $relativeWatermarked = "$roleCode/$userCode/events/$uuid/watermarked/$fileName";
+    foreach ($validated['photos'] as $index => $photoBase64) {
 
-            foreach([$relativeOriginal,$relativeWatermarked] as $path){
-                $dir = storage_path('app/public/'.dirname($path));
-                if(!is_dir($dir) && !mkdir($dir,0755,true) && !is_dir($dir)){
-                    Log::error("Failed to create directory: $dir");
-                    return response()->json(['success'=>false,'message'=>'Failed to create directory','dir'=>$dir],500);
-                }
-            }
+        // Remove base64 prefix
+        $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $photoBase64);
+        $imageData = str_replace(' ', '+', $imageData);
 
-            Storage::disk('public')->put($relativeOriginal,$decoded);
-
-            try {
-                $image = Image::make($decoded);
-                $watermarkPath = storage_path('app/public/watermark.jpg');
-                if(file_exists($watermarkPath)){
-                    $watermark = Image::make($watermarkPath);
-                    $image->insert($watermark,'bottom-right',10,10);
-                }
-                Storage::disk('public')->put($relativeWatermarked,(string)$image->encode('png'));
-            } catch (\Exception $e){
-                Log::error("Intervention Image error: ".$e->getMessage());
-                return response()->json(['success'=>false,'message'=>'Failed to process image','error'=>$e->getMessage()],500);
-            }
-
-            $uploadedFiles[] = [
-                'name'=>$fileName,
-                'original'=>asset('storage/'.$relativeOriginal),
-                'watermarked'=>asset('storage/'.$relativeWatermarked)
-            ];
+        $decoded = base64_decode($imageData);
+        if ($decoded === false) {
+            return response()->json([
+                'success' => false,
+                'message' => "Photo #$index is not a valid base64 string"
+            ], 400);
         }
 
-        return response()->json(['success'=>true,'message'=>'Photos uploaded successfully','files'=>$uploadedFiles]);
+        // Generate file name
+        $fileName = 'photo-' . time() . '-' . $index . '.png';
 
-    } catch (\Exception $e){
-        Log::error("Upload error: ".$e->getMessage());
-        return response()->json(['success'=>false,'message'=>'Upload failed','error'=>$e->getMessage()],500);
+        // Relative path: role/code/events/uuid/photos
+        $folder = 'photos';
+        $relativePath = $roleCode . '/' . $code . '/events/' . $uuid . '/' . $folder . '/' . $fileName;
+
+        // Save to storage
+        Storage::disk('public')->put($relativePath, $decoded);
+
+        // Save uploaded file info
+        $uploadedFiles[] = [
+            'name' => $fileName,
+            'url' => asset('storage/app/public/' . $relativePath),
+        ];
     }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Photos uploaded successfully',
+        'files' => $uploadedFiles,
+    ]);
 }
 
 public function uploadx222(Request $request, $uuid)
