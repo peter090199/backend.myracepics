@@ -305,7 +305,7 @@ class EventController extends Controller
             try {
                 $image = Image::make($decoded);
 
-                $watermarkPath = storage_path('storage/app/public/watermark.jpg');
+                $watermarkPath = storage_path('app/public/watermark.jpg');
                 if (file_exists($watermarkPath)) {
                     $watermark = Image::make($watermarkPath);
                     $image->insert($watermark, 'bottom-right', 10, 10);
