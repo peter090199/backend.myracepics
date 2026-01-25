@@ -308,7 +308,7 @@
     Route::post('updateImage', [ProfilepictureController::class, 'updateImage']);
     Route::get('getProfile', [ProfilepictureController::class, 'getProfile']);
 
-    Route::post('events/{uuid}/photos/upload', [EventController::class, 'upload']);
+    Route::post('photosupload/{uuid}', [EventController::class, 'upload']);
 });
 
   
