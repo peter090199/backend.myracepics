@@ -129,20 +129,19 @@ class ProfilepictureController extends Controller
 
     public function updateImage(Request $request)
     {
-        // $user = Auth::user();
-        // if (!$user) {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Unauthenticated'
-        //     ], 401);
-        // }
-
-        // if (empty($user->code)) {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'User code missing'
-        //     ], 400);
-        // }
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+        if (empty($user->code)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User code missing'
+            ], 400);
+        }
 
         $request->validate([
             'logo' => 'required|image|mimes:jpg,jpeg,png|max:2048',
