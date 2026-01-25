@@ -193,7 +193,7 @@ class ProfilepictureController extends Controller
 
 
 
-     public function updateProfile(Request $request)
+    public function updateProfile(Request $request)
     {
         // 🔥 Get authenticated user
         $user = Auth::user();
@@ -225,43 +225,17 @@ class ProfilepictureController extends Controller
             'date_birth' => 'sometimes|nullable|date',
             'gender' => 'sometimes|nullable|string|max:20',
             'textwatermak' => 'sometimes|nullable|string|max:50',
-            'logo' => 'sometimes|nullable|string', // base64 or URL
-            'profile_picture' => 'sometimes|nullable|string', // base64 or URL
         ]);
 
-        // Handle logo upload (base64)
-        if (!empty($validated['logo'])) {
-            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['logo']);
-            $imageData = str_replace(' ', '+', $imageData);
-
-            $fileName = 'logo-' . time() . '.png';
-            $logoname = 'logo';
-            $relativePath = $roleCode . '/' . $code . '/' . $logoname . '/' . $fileName;
-            Storage::disk('public')->put($relativePath, base64_decode($imageData));
-            $validated['logo'] = asset('storage/app/public/' . $relativePath);
-        }
-
-        // Handle profile_picture upload (base64)
-        if (!empty($validated['profile_picture'])) {
-            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['profile_picture']);
-            $imageData = str_replace(' ', '+', $imageData);
-
-            $fileName = 'profile-' . time() . '.png';
-             $profilename = 'profilepic';
-            $relativePath = $roleCode . '/' . $code . '/' .  $profilename . '/' . $fileName;
-            Storage::disk('public')->put($relativePath, base64_decode($imageData));
-            $validated['profile_picture'] = asset('storage/app/public/' . $relativePath);
-        }
-
         // Update User table
-        $userFields = ['fname','mname','lname','contact_no','current_location','date_birth','gender','textwatermak','logo','profile_picture'];
+        $userFields = ['fname','mname','lname','contact_no','current_location','date_birth','gender','textwatermak'];
         $userUpdate = array_intersect_key($validated, array_flip($userFields));
         $user->update($userUpdate);
 
         // Update Resource table by code
         $resource = Resource::where('code', $code)->first();
         if ($resource) {
-            $resourceFields = ['fname','mname','lname','contact_no','current_location','date_birth','gender','textwatermak','logo','profile_picture'];
+            $resourceFields = ['fname','mname','lname','contact_no','current_location','date_birth','gender','textwatermak'];
             $resourceUpdate = array_intersect_key($validated, array_flip($resourceFields));
             $resource->update($resourceUpdate);
         }
