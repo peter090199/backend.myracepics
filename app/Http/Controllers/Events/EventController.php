@@ -312,13 +312,13 @@ class EventController extends Controller
                 }
 
                 Storage::disk('public')->put($relativeWatermarked, (string) $image->encode('png'));
-            } catch (\Exception $e) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Failed to apply watermark on photo #$index",
-                    'error' => $e->getMessage()
-                ], 500);
-            }
+            }  catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "Photo #$index could not be processed as an image",
+                'error' => $e->getMessage()
+            ], 400);
+        }
         } else {
             // If watermark not applied, just copy original
             Storage::disk('public')->put($relativeWatermarked, $decoded);
