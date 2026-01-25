@@ -235,9 +235,9 @@ class EventController extends Controller
         ]);
     }
 
-
-    public function upload(Request $request, $uuid)
-    {
+public function upload(Request $request, $uuid)
+{
+    try {
         // 🔥 Get authenticated user
         $user = Auth::user();
 
@@ -265,13 +265,28 @@ class EventController extends Controller
 
         $uploadedFiles = [];
 
-        foreach ($request->file('photos') as $file) {
+        $files = $request->file('photos');
+
+        if (!$files || count($files) === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No photos uploaded'
+            ], 400);
+        }
+
+        foreach ($files as $file) {
 
             // Generate file name
             $fileName = 'photo-' . time() . '-' . Str::random(5) . '.' . $file->getClientOriginalExtension();
 
             // Relative path in storage: role/code/event/photos
             $relativePath = $roleCode . '/' . $code . '/events/' . $uuid . '/' . $fileName;
+
+            // Ensure directory exists
+            $dir = dirname(storage_path('app/public/' . $relativePath));
+            if (!file_exists($dir)) {
+                mkdir($dir, 0755, true);
+            }
 
             // Open image using Intervention Image
             $image = Image::make($file->getRealPath());
@@ -282,7 +297,7 @@ class EventController extends Controller
                 $image->insert($watermark, 'bottom-right', 10, 10);
             }
 
-            // Convert to base64 for saving (matching updateImage pattern)
+            // Encode image to PNG
             $imageData = (string) $image->encode('png');
 
             // Save to storage
@@ -300,7 +315,15 @@ class EventController extends Controller
             'message' => 'Photos uploaded successfully',
             'files' => $uploadedFiles,
         ]);
+    } catch (\Exception $e) {
+        // Return error for debugging
+        return response()->json([
+            'success' => false,
+            'message' => 'Upload failed',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
 
 
 }
