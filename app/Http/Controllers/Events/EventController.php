@@ -236,7 +236,75 @@ class EventController extends Controller
     }
 
   
-public function upload(Request $request, $uuid)
+    public function upload(Request $request, $uuid)
+{
+    try {
+        $user = Auth::user();
+        if (!$user) return response()->json(['success'=>false,'message'=>'Unauthenticated'],401);
+        if (empty($user->code)) return response()->json(['success'=>false,'message'=>'User code missing'],400);
+
+        $roleCode = $user->role_code;
+        $userCode = $user->code;
+
+        $validated = $request->validate([
+            'photos'=>'required|array',
+            'photos.*'=>'required|string',
+        ]);
+
+        $uploadedFiles = [];
+
+        foreach ($validated['photos'] as $index => $base64) {
+            $imageData = preg_replace('#^data:image/\w+;base64,#i','',$base64);
+            $imageData = str_replace(' ','+',$imageData);
+
+            $decoded = base64_decode($imageData,true);
+            if ($decoded===false){
+                return response()->json(['success'=>false,'message'=>"Photo #$index is not valid base64"],400);
+            }
+
+            $fileName = 'photo-'.time().'-'.Str::random(5).'.png';
+            $relativeOriginal = "$roleCode/$userCode/events/$uuid/original/$fileName";
+            $relativeWatermarked = "$roleCode/$userCode/events/$uuid/watermarked/$fileName";
+
+            foreach([$relativeOriginal,$relativeWatermarked] as $path){
+                $dir = storage_path('app/public/'.dirname($path));
+                if(!is_dir($dir) && !mkdir($dir,0755,true) && !is_dir($dir)){
+                    Log::error("Failed to create directory: $dir");
+                    return response()->json(['success'=>false,'message'=>'Failed to create directory','dir'=>$dir],500);
+                }
+            }
+
+            Storage::disk('public')->put($relativeOriginal,$decoded);
+
+            try {
+                $image = Image::make($decoded);
+                $watermarkPath = storage_path('app/public/watermark.jpg');
+                if(file_exists($watermarkPath)){
+                    $watermark = Image::make($watermarkPath);
+                    $image->insert($watermark,'bottom-right',10,10);
+                }
+                Storage::disk('public')->put($relativeWatermarked,(string)$image->encode('png'));
+            } catch (\Exception $e){
+                Log::error("Intervention Image error: ".$e->getMessage());
+                return response()->json(['success'=>false,'message'=>'Failed to process image','error'=>$e->getMessage()],500);
+            }
+
+            $uploadedFiles[] = [
+                'name'=>$fileName,
+                'original'=>asset('storage/'.$relativeOriginal),
+                'watermarked'=>asset('storage/'.$relativeWatermarked)
+            ];
+        }
+
+        return response()->json(['success'=>true,'message'=>'Photos uploaded successfully','files'=>$uploadedFiles]);
+
+    } catch (\Exception $e){
+        Log::error("Upload error: ".$e->getMessage());
+        return response()->json(['success'=>false,'message'=>'Upload failed','error'=>$e->getMessage()],500);
+    }
+}
+
+public function uploadx222(Request $request, $uuid)
 {
     try {
         $user = Auth::user();
