@@ -321,7 +321,7 @@ class EventController extends Controller
         }
         } else {
             // If watermark not applied, just copy original
-            Storage::disk('public')->put($relativeWatermarked, $decoded);
+            Storage::disk('storage/app/public')->put($relativeWatermarked, $decoded);
         }
 
         $uploadedFiles[] = [
