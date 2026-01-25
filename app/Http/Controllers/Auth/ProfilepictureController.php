@@ -185,11 +185,10 @@ class ProfilepictureController extends Controller
         // ================= UPDATE RESOURCE TABLE =================
          $resource = Resource::where('code', $code)->first();
         if ($resource) {
-            $resource->logo = $user->logo ?? $resource->logo;
-            $resource->profile_picture = $user->profile_picture ?? $resource->profile_picture;
+            $resource->user;
             $resource->save();
         }
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Images updated successfully',
