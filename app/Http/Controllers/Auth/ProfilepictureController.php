@@ -140,55 +140,40 @@ class ProfilepictureController extends Controller
         ]);
 
         // ================= LOGO =================
-        if (!empty($validated['logo'])) {
-            // Delete old logo
-            if ($user->logo && Storage::disk('public')->exists($user->logo)) {
-                Storage::disk('public')->delete($user->logo);
-            }
-
+         if (!empty($validated['logo'])) {
             $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['logo']);
             $imageData = str_replace(' ', '+', $imageData);
 
             $fileName = 'logo-' . time() . '.png';
             $logoname = 'logo';
-            $relativePath = "$roleCode/$code/$logoname/$fileName";
-
-            Storage::disk('public')->makeDirectory("$roleCode/$code/$logoname");
+            $relativePath = $roleCode . '/' . $code . '/' . $logoname . '/' . $fileName;
             Storage::disk('public')->put($relativePath, base64_decode($imageData));
-
-            $user->logo = $relativePath;
+            $validated['logo'] = asset('storage/app/public/' . $relativePath);
         }
 
         // ================= PROFILE PICTURE =================
         if (!empty($validated['profile_picture'])) {
-            // Delete old profile picture
-            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
-                Storage::disk('public')->delete($user->profile_picture);
-            }
-
             $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['profile_picture']);
             $imageData = str_replace(' ', '+', $imageData);
 
             $fileName = 'profile-' . time() . '.png';
-            $profilename = 'profilepic';
-            $relativePath = "$roleCode/$code/$profilename/$fileName";
-
-            Storage::disk('public')->makeDirectory("$roleCode/$code/$profilename");
+             $profilename = 'profilepic';
+            $relativePath = $roleCode . '/' . $code . '/' .  $profilename . '/' . $fileName;
             Storage::disk('public')->put($relativePath, base64_decode($imageData));
-
-            $user->profile_picture = $relativePath;
+            $validated['profile_picture'] = asset('storage/app/public/' . $relativePath);
         }
 
-        // Save user
-        $user->save();
+        $userFields = ['logo','profile_picture'];
+        $userUpdate = array_intersect_key($validated, array_flip($userFields));
+        $user->update($userUpdate);
 
-        // ================= UPDATE RESOURCE TABLE =================
-         $resource = Resource::where('code', $code)->first();
+        // Update Resource table by code
+        $resource = Resource::where('code', $code)->first();
         if ($resource) {
-            $resource->user;
-            $resource->save();
+            $resourceFields = ['logo','profile_picture'];
+            $resourceUpdate = array_intersect_key($validated, array_flip($resourceFields));
+            $resource->update($resourceUpdate);
         }
-
         return response()->json([
             'success' => true,
             'message' => 'Images updated successfully',
