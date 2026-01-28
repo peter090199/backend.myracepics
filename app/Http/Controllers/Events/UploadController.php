@@ -131,7 +131,7 @@ class UploadController extends Controller
             }
 
             // Logo watermark
-            $logoPath = storage_path('app/public/watermark.png');
+            $logoPath = storage_path('app/public/watermark.jpg');
             if (file_exists($logoPath)) {
                 $logo = $manager->read($logoPath)->scale(120, null, function ($constraint) {
                     $constraint->aspectRatio();
