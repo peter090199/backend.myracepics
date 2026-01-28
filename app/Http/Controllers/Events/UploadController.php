@@ -291,7 +291,7 @@ class UploadController extends Controller
             $fontSize = max(14, intval($imgW / 45));
             $gapX     = $fontSize * 12;
             $gapY     = $fontSize * 8;
-            $fontPath = public_path('fonts/italic.ttf');
+            $fontPath = public_path('app/public/fonts/italic.ttf');
 
             if (file_exists($fontPath)) {
                 for ($y = -$imgH; $y < $imgH * 2; $y += $gapY) {
@@ -309,7 +309,7 @@ class UploadController extends Controller
             // ----------------------
             // LOGO WATERMARK
             // ----------------------
-            $logoPath = public_path('/watermark.jpg');
+            $logoPath = public_path('app/public/watermark.jpg');
             if (file_exists($logoPath)) {
                 $logo = $manager->read($logoPath)->scale(120, null, function ($constraint) {
                     $constraint->aspectRatio();
@@ -335,7 +335,7 @@ class UploadController extends Controller
 
                 // ✅ RELATIVE PATHS
                 'original_path' => $originalAbsolutePath,
-                'watermark_path'=> $watermarkAbsolutePath,
+                'watermark_path'=> $watermarkRelativePath,
 
                 'img_price'     => $request->img_price ?? 0,
                 'img_qty'       => $request->img_qty ?? 1,
@@ -343,15 +343,20 @@ class UploadController extends Controller
                 'service_fee'   => $request->service_fee ?? 0,
             ]);
 
-            // $uploaded[] = [
-            //     'img_id'        => $detail->img_id,
-            //     'watermark_url' => asset('storage/' . $watermarkRelativePath),
-            // ];
+            $uploaded[] = [
+                'img_id'        => $detail->img_id,
+                'watermark_url' => asset('storage/' . $watermarkRelativePath),
+            ];
         }
+
+        // ----------------------
+        // RESPONSE
+        // ----------------------
         return response()->json([
             'success'        => true,
             'uploaded_count' => count($uploaded),
             'skipped_count'  => count($skipped),
+            'uploaded'       => $uploaded,
             'skipped'        => $skipped,
         ]);
     }
