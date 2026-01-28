@@ -307,9 +307,7 @@
     Route::post('updateImage', [ProfilepictureController::class, 'updateImage']);
     Route::get('getProfile', [ProfilepictureController::class, 'getProfile']);
 
-
     //event images upload photographer
-    Route::post('upload', [UploadController::class, 'upload']);
     Route::post('uploadimages', [UploadController::class, 'uploadBase64']);
 });
 

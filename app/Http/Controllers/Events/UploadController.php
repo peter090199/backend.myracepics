@@ -162,7 +162,7 @@ class UploadController extends Controller
             ]);
 
             $uploaded[] = [
-                'watermark' => $detail->watermark_path,
+                'watermark' => $watermarkPath,
             ];
         }
 
