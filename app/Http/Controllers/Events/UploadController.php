@@ -336,8 +336,8 @@ class UploadController extends Controller
                 'img_name'      => $filename,
 
                 // ✅ RELATIVE PATHS
-                'original_path' => $originalRelativePath,
-                'watermark_path'=> $watermarkRelativePath,
+                'original_path' => $originalAbsolutePath,
+                'watermark_path'=> $watermarkAbsolutePath,
 
                 'img_price'     => $request->img_price ?? 0,
                 'img_qty'       => $request->img_qty ?? 1,
