@@ -201,7 +201,7 @@ class EventController extends Controller
    public function getEventByUuid($uuid)
     {
         // Find event by UUID
-        $event = Events::where('uuid', $uuid)->first();
+        $event = Events::where('evnt_id ', $uuid)->first();
 
         if (!$event) {
             return response()->json([

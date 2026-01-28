@@ -354,7 +354,10 @@ class UploadController extends Controller
         // RESPONSE
         // ----------------------
         return response()->json([
-            'success'        => true,
+            'success'        => count($skipped) === 0, // false if any images skipped
+            'message'        => count($skipped) === 0 
+                                ? 'Upload photos saved successfully!' 
+                                : 'Some images were skipped or failed to process.',
             'uploaded_count' => count($uploaded),
             'skipped_count'  => count($skipped),
             'uploaded'       => $uploaded,
