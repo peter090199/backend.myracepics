@@ -197,44 +197,43 @@ class EventController extends Controller
             'events'  => $events
         ]);
     }
+public function getEventByUuid($evnt_id)
+{
+    // Find event by UUID (correct column name without trailing space)
+    $event = Events::where('evnt_id', $evnt_id)->first();
 
-   public function getEventByUuid($evnt_id)
-    {
-        // Find event by UUID
-        $event = Events::where('evnt_id ', $evnt_id)->first();
-
-        if (!$event) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Event not found.'
-            ], 404);
-        }
-
-        // If the 'image' field is stored as JSON array, get only the first image
-        $image = null;
-        if (!empty($event->image)) {
-            $images = json_decode($event->image, true); // decode JSON
-            if (is_array($images) && count($images) > 0) {
-                $image = $images[0]; // get only the first image
-            }
-        }
-
-        // Return as array
+    if (!$event) {
         return response()->json([
-            'success' => true,
-            'event' => [
-                'id'                  => $event->id,
-                'evnt_id'             => $event->evnt_id,
-                'title'               => $event->title,
-                'location'            => $event->location,
-                'date'                => $event->date,
-                'category'            => $event->category,
-                'image'               => $image,
-                'photosCount'         => $event->photos_count ?? 0,
-                'participantsCount'   => $event->participants_count ?? 0,
-            ]
-        ]);
+            'success' => false,
+            'message' => 'Event not found.'
+        ], 404);
     }
+
+    // If the 'image' field is stored as JSON array, get only the first image
+    $image = null;
+    if (!empty($event->image)) {
+        $images = json_decode($event->image, true); // decode JSON
+        if (is_array($images) && count($images) > 0) {
+            $image = $images[0]; // get only the first image
+        }
+    }
+
+    // Return as array
+    return response()->json([
+        'success' => true,
+        'event' => [
+            'id'                  => $event->id,
+            'evnt_id'             => $event->evnt_id,
+            'title'               => $event->title,
+            'location'            => $event->location,
+            'date'                => $event->date,
+            'category'            => $event->category,
+            'image'               => $image,
+            'photosCount'         => $event->photos_count ?? 0,
+            'participantsCount'   => $event->participants_count ?? 0,
+        ]
+    ]);
+}
 
    public function upload(Request $request)
 {
