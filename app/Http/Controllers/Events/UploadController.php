@@ -343,20 +343,15 @@ class UploadController extends Controller
                 'service_fee'   => $request->service_fee ?? 0,
             ]);
 
-            $uploaded[] = [
-                'img_id'        => $detail->img_id,
-                'watermark_url' => asset('storage/' . $watermarkRelativePath),
-            ];
+            // $uploaded[] = [
+            //     'img_id'        => $detail->img_id,
+            //     'watermark_url' => asset('storage/' . $watermarkRelativePath),
+            // ];
         }
-
-        // ----------------------
-        // RESPONSE
-        // ----------------------
         return response()->json([
             'success'        => true,
             'uploaded_count' => count($uploaded),
             'skipped_count'  => count($skipped),
-            'uploaded'       => $uploaded,
             'skipped'        => $skipped,
         ]);
     }
