@@ -162,16 +162,18 @@ class UploadController extends Controller
             ]);
 
             $uploaded[] = [
-                'img_id'    => $detail->img_id,
-                'img_name'  => $detail->img_name,
                 'watermark' => $detail->watermark_path,
             ];
         }
 
-        return response()->json([
-            'success'  => true,
-            'messages' => count($uploaded),
+       return response()->json([
+            'success'         => true,
+            'uploaded_count'  => count($uploaded),
+            'skipped_count'   => count($skipped),
+            'uploaded'        => $uploaded,
+            'skipped'         => $skipped,
         ]);
+
     }
 
 
