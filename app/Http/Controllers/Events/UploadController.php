@@ -267,8 +267,8 @@ class UploadController extends Controller
             $watermarkRelativePath = "{$watermarkDir}/{$filename}";
 
             // Absolute paths (PROCESSING ONLY)
-            $originalAbsolutePath  = storage_path("app/public/{$originalRelativePath}");
-            $watermarkAbsolutePath = storage_path("app/public/{$watermarkRelativePath}");
+            $originalAbsolutePath  = public_path("{$originalRelativePath}");
+            $watermarkAbsolutePath = public_path("{$watermarkRelativePath}");
 
             // Save original image
             $disk->put($originalRelativePath, $binary);
@@ -291,7 +291,7 @@ class UploadController extends Controller
             $fontSize = max(14, intval($imgW / 45));
             $gapX     = $fontSize * 12;
             $gapY     = $fontSize * 8;
-            $fontPath = storage_path('app/public/fonts/italic.ttf');
+            $fontPath = public_path('fonts/italic.ttf');
 
             if (file_exists($fontPath)) {
                 for ($y = -$imgH; $y < $imgH * 2; $y += $gapY) {
@@ -309,7 +309,7 @@ class UploadController extends Controller
             // ----------------------
             // LOGO WATERMARK
             // ----------------------
-            $logoPath = storage_path('app/public/watermark.jpg');
+            $logoPath = public_path('/watermark.jpg');
             if (file_exists($logoPath)) {
                 $logo = $manager->read($logoPath)->scale(120, null, function ($constraint) {
                     $constraint->aspectRatio();
@@ -334,8 +334,8 @@ class UploadController extends Controller
                 'img_name'      => $filename,
 
                 // ✅ RELATIVE PATHS
-                'original_path' => $originalRelativePath,
-                'watermark_path'=> $watermarkRelativePath,
+                'original_path' => $originalAbsolutePath,
+                'watermark_path'=> $watermarkAbsolutePath,
 
                 'img_price'     => $request->img_price ?? 0,
                 'img_qty'       => $request->img_qty ?? 1,
