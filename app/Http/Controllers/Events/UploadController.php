@@ -376,14 +376,12 @@ class UploadController extends Controller
 
         $data = $images->map(function($img) use ($user, $evnt_id) {
             // Build secure watermark URL for this image
-            $watermarkUrl = asset("storage/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}");
-            $originalUrl  = asset("storage/{$user->role_code}/{$user->code}/{$evnt_id}/original/{$img->img_name}");
+            $watermarkUrl = asset("storage/app/public/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}");
 
             return [
                 'img_id'        => $img->img_id,
                 'img_name'      => $img->img_name,
                 'watermark_url' => $watermarkUrl,
-                'original_url'  => $originalUrl,
                 'img_price'     => $img->img_price,
                 'img_qty'       => $img->img_qty,
                 'created_at'    => $img->created_at->toDateTimeString(),
