@@ -325,6 +325,9 @@ class UploadController extends Controller
             // ----------------------
             // SAVE DETAIL
             // ----------------------
+            $originalDbPath  = "storage/app/public/{$originalDir}/{$filename}";
+            $watermarkDbPath = "storage/app/public/{$watermarkDir}/{$filename}";
+           
             $detail = ImagesUpload::create([
                 'event_image_id'=> $eventHeader->id,
                 'code'          => $code,
@@ -334,11 +337,8 @@ class UploadController extends Controller
                 'evnt_name'     => $request->evnt_name,
                 'img_id'        => (string) Str::uuid(),
                 'img_name'      => $filename,
-
-                // ✅ RELATIVE PATHS
-                'original_path' => $originalAbsolutePath,
-                'watermark_path'=> $watermarkAbsolutePath,
-
+                'original_path' => $originalDbPath,
+                'watermark_path'=> $watermarkDbPath,
                 'img_price'     => $request->img_price ?? 0,
                 'img_qty'       => $request->img_qty ?? 1,
                 'platform_fee'  => $request->platform_fee ?? 0,
