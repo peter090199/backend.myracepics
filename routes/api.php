@@ -144,10 +144,8 @@
     Route::post('updatePostByTransNo/{transNo}', [PostController::class, 'updatePostByTransNo']);
     // Route::get('update_count', [ChatController::class, 'updateNotificationCount']);
     Route::get('getDataPost', [PostController::class, 'getDataPost']);
-
     Route::get('getNotificationsIsUnRead', [ChatController::class, 'getNotificationsIsUnRead']);
     Route::get('getNotificationsIsRead', [ChatController::class, 'getNotificationsIsRead']);
-
     Route::post('messages/mark_allAsread', [ChatController::class, 'markAllAsRead']);
     Route::get('messages_receive/{receiverId}', [ChatController::class, 'messages_receive']);
     Route::get('getMessagesAll', [ChatController::class, 'getMessagesAll']);
