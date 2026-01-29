@@ -142,7 +142,7 @@
 
     Route::post('savePost', [PostController::class, 'savePost']);
     Route::post('updatePostByTransNo/{transNo}', [PostController::class, 'updatePostByTransNo']);
-    Route::get('update_count', [ChatController::class, 'updateNotificationCount']);
+    // Route::get('update_count', [ChatController::class, 'updateNotificationCount']);
     Route::get('getDataPost', [PostController::class, 'getDataPost']);
 
     Route::get('getNotificationsIsUnRead', [ChatController::class, 'getNotificationsIsUnRead']);
