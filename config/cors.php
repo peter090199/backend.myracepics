@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
-    'allowed_origins' => ['http://localhost:4200', 'https://backend.myracepics.com/public/api'],
+    'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],
 
