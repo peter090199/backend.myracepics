@@ -755,8 +755,12 @@ public function uploadx222(Request $request, $uuid)
             ], 401);
         }
 
-        // Fast query: select only needed columns
-        $images = DB::table('images_uploads')
+        // Pagination parameters (from query string)
+        $perPage = request()->query('per_page', 50); // default 50 images per page
+        $page = request()->query('page', 1);
+
+        // Query: select needed columns + conditional filtering
+        $query = DB::table('images_uploads')
             ->when($code !== 'All', function ($query) use ($code) {
                 return $query->where('code', $code);
             })
@@ -781,8 +785,10 @@ public function uploadx222(Request $request, $uuid)
                 'created_at',
                 'recordstatus'
             ])
-            ->orderBy('created_at', 'asc')
-            ->get();
+            ->orderBy('created_at', 'asc');
+
+        // Paginate results
+        $images = $query->paginate($perPage, ['*'], 'page', $page);
 
         if ($images->isEmpty()) {
             return response()->json([
@@ -793,10 +799,14 @@ public function uploadx222(Request $request, $uuid)
 
         return response()->json([
             'success' => true,
-            'count'   => $images->count(),
-            'images'  => $images
+            'count'        => $images->total(),
+            'current_page' => $images->currentPage(),
+            'last_page'    => $images->lastPage(),
+            'per_page'     => $images->perPage(),
+            'images'       => $images->items()
         ], 200);
     }
+
 
     public function getImagesByCodexx($code)
     {
