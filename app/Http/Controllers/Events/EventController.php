@@ -744,9 +744,10 @@ public function uploadx222(Request $request, $uuid)
         }
     }
 
+    //getImagesByCode
     public function getImagesByCode($code)
     {
-        // Optional: check authentication if needed
+        // Check authentication (optional)
         $user = Auth::user();
         if (!$user) {
             return response()->json([
@@ -755,10 +756,24 @@ public function uploadx222(Request $request, $uuid)
             ], 401);
         }
 
-        // Fetch images
+        // Fetch images, excluding 'original_path'
+        $images = DB::table('images_uploads')
+            ->select('*') // Select all columns first
+            ->get()
+            ->map(function ($item) {
+                unset($item->original_path); // Remove original_path from each record
+                return $item;
+            })
+            ->where('code', $code); // filter by code
+
+        // Fetch images from DB
         $images = DB::table('images_uploads')
             ->where('code', $code)
-            ->get();
+            ->get()
+            ->map(function ($image) {
+                unset($image->original_path); // hide original_path
+                return $image;
+            });
 
         if ($images->isEmpty()) {
             return response()->json([
@@ -773,6 +788,7 @@ public function uploadx222(Request $request, $uuid)
             'data' => $images
         ], 200);
     }
+
 
 
 }
