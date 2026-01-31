@@ -745,100 +745,158 @@ public function uploadx222(Request $request, $uuid)
     }
 
     //getImagesByCode
-    function getImagesByCode(Request $request, $code)
-    {
-        // Check authentication
-        $user = Auth::user();
-        if (!$user) {
+    // function getImagesByCode(Request $request, $code)
+    // {
+    //     // Check authentication
+    //     $user = Auth::user();
+    //     if (!$user) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Unauthenticated'
+    //         ], 401);
+    //     }
+
+    //     // Pagination parameters
+    //     $perPage = $request->query('per_page', 50); // default 50 images per page
+    //     $page = $request->query('page', 1);
+
+    //     // Conditional query: filter by code or all active images
+    //     $query = DB::table('images_uploads')
+    //         ->when($code !== 'All', fn($q) => $q->where('code', $code))
+    //         ->when($code === 'All', fn($q) => $q->where('recordstatus', 'Active'))
+    //         ->select([
+    //             'id',
+    //             'event_image_id',
+    //             'role_code',
+    //             'code',
+    //             'evnt_id',
+    //             'evnt_name',
+    //             'fullname',
+    //             'watermark_path',
+    //             'img_id',
+    //             'img_name',
+    //             'img_qty',
+    //             'img_price',
+    //             'platform_fee',
+    //             'service_fee',
+    //             'created_at',
+    //             'recordstatus'
+    //         ])
+    //         ->orderBy('created_at', 'asc');
+    //     // Paginate results
+    //     $images = $query->paginate($perPage, ['*'], 'page', $page);
+
+    //     if ($images->isEmpty()) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'No images found'
+    //         ], 404);
+    //     }
+
+    //     // Return JSON with pagination info
+    //     return response()->json([
+    //         'success'       => true,
+    //         'count'         => $images->total(),
+    //         'current_page'  => $images->currentPage(),
+    //         'last_page'     => $images->lastPage(),
+    //         'per_page'      => $images->perPage(),
+    //         'images'        => $images->items()
+    //     ], 200);
+    // }
+
+    
+        public function getImagesByCode(Request $request, $code, $evnt_id)
+        {
+            // Check authentication
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated'
+                ], 401);
+            }
+
+            // Pagination parameters
+            $perPage = $request->query('per_page', 50); // default 50 images per page
+            $page = $request->query('page', 1);
+
+            // Conditional query: filter by code or all active images and filter by event
+            $query = DB::table('images_uploads')
+                ->when($code !== 'All', fn($q) => $q->where('code', $code))
+                ->when($code === 'All', fn($q) => $q->where('recordstatus', 'Active'))
+                ->where('evnt_id', $evnt_id) // filter by event ID
+                ->select([
+                    'id',
+                    'event_image_id',
+                    'role_code',
+                    'code',
+                    'evnt_id',
+                    'evnt_name',
+                    'fullname',
+                    'watermark_path',
+                    'img_id',
+                    'img_name',
+                    'img_qty',
+                    'img_price',
+                    'platform_fee',
+                    'service_fee',
+                    'created_at',
+                    'recordstatus'
+                ])
+                ->orderBy('created_at', 'asc');
+
+            // Paginate results
+            $images = $query->paginate($perPage, ['*'], 'page', $page);
+
+            if ($images->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No images found'
+                ], 404);
+            }
+
+            // Return JSON with pagination info
             return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated'
-            ], 401);
+                'success'       => true,
+                'count'         => $images->total(),
+                'current_page'  => $images->currentPage(),
+                'last_page'     => $images->lastPage(),
+                'per_page'      => $images->perPage(),
+                'images'        => $images->items()
+            ], 200);
         }
 
-        // Pagination parameters
-        $perPage = $request->query('per_page', 50); // default 50 images per page
-        $page = $request->query('page', 1);
+    // public function getImagesByCodexx($code)
+    // {
+    //     $user = Auth::user();
+    //     if (!$user) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Unauthenticated'
+    //         ], 401);
+    //     }
 
-        // Conditional query: filter by code or all active images
-        $query = DB::table('images_uploads')
-            ->when($code !== 'All', fn($q) => $q->where('code', $code))
-            ->when($code === 'All', fn($q) => $q->where('recordstatus', 'Active'))
-            ->select([
-                'id',
-                'event_image_id',
-                'role_code',
-                'code',
-                'evnt_id',
-                'evnt_name',
-                'fullname',
-                'watermark_path',
-                'img_id',
-                'img_name',
-                'img_qty',
-                'img_price',
-                'platform_fee',
-                'service_fee',
-                'created_at',
-                'recordstatus'
-            ])
-            ->orderBy('created_at', 'asc');
+    //     $images = DB::table('images_uploads')
+    //         ->where('code', $code)
+    //         ->get()
+    //         ->map(function ($image) {
+    //             unset($image->original_path); // hide original_path
+    //             return $image;
+    //         });
 
-        // Paginate results
-        $images = $query->paginate($perPage, ['*'], 'page', $page);
+    //     if ($images->isEmpty()) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'No images found for this code'
+    //         ], 404);
+    //     }
 
-        if ($images->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No images found'
-            ], 404);
-        }
-
-        // Return JSON with pagination info
-        return response()->json([
-            'success'       => true,
-            'count'         => $images->total(),
-            'current_page'  => $images->currentPage(),
-            'last_page'     => $images->lastPage(),
-            'per_page'      => $images->perPage(),
-            'images'        => $images->items()
-        ], 200);
-    }
-
-
-    public function getImagesByCodexx($code)
-    {
-        // Check authentication (optional)
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated'
-            ], 401);
-        }
-
-        // Fetch images from DB
-        $images = DB::table('images_uploads')
-            ->where('code', $code)
-            ->get()
-            ->map(function ($image) {
-                unset($image->original_path); // hide original_path
-                return $image;
-            });
-
-        if ($images->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No images found for this code'
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'count' => $images->count(),
-            'images' => $images
-        ], 200);
-    }
+    //     return response()->json([
+    //         'success' => true,
+    //         'count' => $images->count(),
+    //         'images' => $images
+    //     ], 200);
+    // }
 
 
 }

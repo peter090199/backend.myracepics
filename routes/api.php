@@ -321,7 +321,7 @@
 
     //getphotographer
     Route::get('getPhotographers', [UsersActive::class, 'getPhotographers']);
-    Route::get('getImagesByCode/{code}', [EventController::class, 'getImagesByCode']);  
+    Route::get('getImagesByEventId/{code}/{evnt_id}', [EventController::class, 'getImagesByCode']); 
     Route::get('images/{code}', [EventController::class, 'getImagesByCode']);
 
 
