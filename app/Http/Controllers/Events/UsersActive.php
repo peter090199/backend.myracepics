@@ -16,7 +16,7 @@ class UsersActive extends Controller
     {
         // Fetch only the active photographers
         $photographers = DB::table('users')
-            ->select('fullname', 'role_code', 'recordstatus')
+            ->select('fullname','code', 'role_code', 'recordstatus')
             ->where('role_code', 'LIKE', '%PHOTOGRAPHER%')
             ->get();
 
