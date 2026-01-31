@@ -744,26 +744,15 @@ public function uploadx222(Request $request, $uuid)
         }
     }
 
-    
-    public function getImagesByCode(Request $request)
+    public function getImagesByCode($code)
     {
-        // Get logged-in user
+        // Optional: check authentication if needed
         $user = Auth::user();
         if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated'
             ], 401);
-        }
-
-        // Get code from POST body
-        $code = $request->input('code');
-
-        if (!$code) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Code is required'
-            ], 400);
         }
 
         // Fetch images
