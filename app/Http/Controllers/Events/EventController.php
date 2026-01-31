@@ -856,7 +856,7 @@ public function uploadx222(Request $request, $uuid)
             return response()->json([
                 'success' => false,
                 'message' => 'No images found'
-            ], 404);
+            ], 201);
         }
 
         return response()->json([
