@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 use App\Models\ImagesUpload;
 use App\Models\Event\EventImage;
+use Illuminate\Support\Facades\URL;
 
 class UploadController extends Controller
 {
