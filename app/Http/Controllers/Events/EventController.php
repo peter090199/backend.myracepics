@@ -755,26 +755,34 @@ public function uploadx222(Request $request, $uuid)
             ], 401);
         }
 
-        // Conditional query
-        if ($code === 'All') {
-            // SELECT * FROM images_uploads WHERE recordstatus='Active'
-            $images = DB::table('images_uploads')
-                ->where('recordstatus', 'Active')
-                ->get()
-                ->map(function ($image) {
-                    unset($image->original_path); // hide original_path
-                    return $image;
-                });
-        } else {
-                $images = DB::table('images_uploads')
-                ->where('code', $code)
-                ->orderBy('created_at', 'asc')
-                ->get()
-                ->map(function ($image) {
-                    unset($image->original_path); // hide original_path
-                    return $image;
-                });
-        }
+        // Fast query: select only needed columns
+        $images = DB::table('images_uploads')
+            ->when($code !== 'All', function ($query) use ($code) {
+                return $query->where('code', $code);
+            })
+            ->when($code === 'All', function ($query) {
+                return $query->where('recordstatus', 'Active');
+            })
+            ->select([
+                'id',
+                'event_image_id',
+                'role_code',
+                'code',
+                'event_id',
+                'evnt_name',
+                'fullname',
+                'watermark_path',
+                'img_id',
+                'img_name',
+                'img_qty',
+                'img_price',
+                'platform_fee',
+                'service_fee',
+                'created_at',
+                'recordstatus'
+            ])
+            ->orderBy('created_at', 'asc')
+            ->get();
 
         if ($images->isEmpty()) {
             return response()->json([
