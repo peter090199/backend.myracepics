@@ -274,7 +274,7 @@ class UploadController extends Controller
         ]);
     }
 
-    
+
     public function getImagesByEvent($evnt_id)
     {
         $user = Auth::user();
@@ -297,6 +297,11 @@ class UploadController extends Controller
                 'img_price'     => $img->img_price,
                 'img_qty'       => $img->img_qty,
                 'created_at'    => $img->created_at->toDateTimeString(),
+                'preview_url' => URL::temporarySignedRoute(
+                'image.preview',
+                    now()->addSeconds(3),
+                    ['evnt_id' => $evnt_id]
+                ),
             ];
         });
 
