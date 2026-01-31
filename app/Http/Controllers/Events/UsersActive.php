@@ -14,19 +14,26 @@ class UsersActive extends Controller
      */
     public function getPhotographers(): JsonResponse
     {
-        // Define the first query
-        $users = DB::table('users')
-            ->select('fullname','code', 'role_code', 'status')
+        // 1. Put the table WITH the 'code' column FIRST
+        $query1 = DB::table('resources')
+            ->select('fullname', 'code', 'role_code', 'status')
             ->where('role_code', 'DEF-PHOTOGRAPHER')
             ->where('recordstatus', 'active');
 
-        // Union with the second query and get results
-        $photographers = DB::table('resources')
-            ->select('fullname','code', 'role_code', 'status')
+        // 2. Put the table WITHOUT the 'code' column SECOND
+        // Use DB::raw to force a string value so it cannot be null
+        $query2 = DB::table('users')
+            ->select(
+                'fullname', 
+                DB::raw("'NOT-ASSIGNED' as code"), 
+                'role_code', 
+                'status'
+            )
             ->where('role_code', 'DEF-PHOTOGRAPHER')
-            ->where('recordstatus', 'active')
-            ->union($users)
-            ->get();
+            ->where('recordstatus', 'active');
+
+        // 3. Union them
+        $photographers = $query1->union($query2)->get();
 
         return response()->json([
             'success' => true,
