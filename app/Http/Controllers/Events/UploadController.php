@@ -256,7 +256,7 @@ class UploadController extends Controller
                 'img_price'     => $img->img_price,
                 'img_qty'       => $img->img_qty,
                 'created_at'    => $img->created_at->toDateTimeString(),
-
+                'fullname'      =>$img->fullname,
                 // ✅ SIGNED PREVIEW URL (hover only)
                 'preview_url' => URL::temporarySignedRoute(
                     'image.preview',
