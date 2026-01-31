@@ -745,8 +745,9 @@ public function uploadx222(Request $request, $uuid)
     }
 
     //getImagesByCode
-    public function getImagesByCode($code)
+     public function getImagesByCode(Request $request, $code)
     {
+        // Check authentication
         $user = Auth::user();
         if (!$user) {
             return response()->json([
@@ -755,18 +756,14 @@ public function uploadx222(Request $request, $uuid)
             ], 401);
         }
 
-        // Pagination parameters (from query string)
-        $perPage = request()->query('per_page', 50); // default 50 images per page
-        $page = request()->query('page', 1);
+        // Pagination parameters
+        $perPage = $request->query('per_page', 50); // default 50 images per page
+        $page = $request->query('page', 1);
 
-        // Query: select needed columns + conditional filtering
+        // Conditional query: filter by code or all active images
         $query = DB::table('images_uploads')
-            ->when($code !== 'All', function ($query) use ($code) {
-                return $query->where('code', $code);
-            })
-            ->when($code === 'All', function ($query) {
-                return $query->where('recordstatus', 'Active');
-            })
+            ->when($code !== 'All', fn($q) => $q->where('code', $code))
+            ->when($code === 'All', fn($q) => $q->where('recordstatus', 'Active'))
             ->select([
                 'id',
                 'event_image_id',
@@ -797,13 +794,14 @@ public function uploadx222(Request $request, $uuid)
             ], 404);
         }
 
+        // Return JSON with pagination info
         return response()->json([
-            'success' => true,
-            'count'        => $images->total(),
-            'current_page' => $images->currentPage(),
-            'last_page'    => $images->lastPage(),
-            'per_page'     => $images->perPage(),
-            'images'       => $images->items()
+            'success'       => true,
+            'count'         => $images->total(),
+            'current_page'  => $images->currentPage(),
+            'last_page'     => $images->lastPage(),
+            'per_page'      => $images->perPage(),
+            'images'        => $images->items()
         ], 200);
     }
 

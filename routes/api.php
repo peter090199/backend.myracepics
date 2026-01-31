@@ -320,9 +320,9 @@
     ->middleware(['signed', 'throttle:30,1']);
 
     //getphotographer
-     Route::get('getPhotographers', [UsersActive::class, 'getPhotographers']);
+    Route::get('getPhotographers', [UsersActive::class, 'getPhotographers']);
     Route::get('getImagesByCode/{code}', [EventController::class, 'getImagesByCode']);  
-
+    Route::get('images/{code}', [EventController::class, 'getImagesByCode']);
 
 
 
