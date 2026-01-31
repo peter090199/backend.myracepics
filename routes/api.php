@@ -307,7 +307,11 @@
 
     //event images upload photographer
     Route::post('uploadimages', [UploadController::class, 'uploadBase64']);
+
+    //getimages for event by photographer
     Route::get('getImagesByEventById/{evnt_id}', [UploadController::class, 'getImagesByEventById']);
+
+
     Route::get('getImagesByEvent/{evnt_id}', [UploadController::class, 'getImagesByEvent']);
     
     //remove watermark
@@ -317,7 +321,7 @@
 
     //getphotographer
      Route::get('getPhotographers', [UsersActive::class, 'getPhotographers']);
-        
+
 });
 
   
