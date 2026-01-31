@@ -73,23 +73,23 @@
     Route::post('register',[RegisterController::class,'register'])->name('register');
 
     Route::post('accountactivation',[RegisterController::class,'accountactivation'])->name('accountactivation');
-    Route::post('send-message', function (Request $request) {
-    $message = $request->input('message');
-    event(new MessageSent($message)); // ✅ Corrected event class name
-    return response()->json(['success' => true, 'message' => $message]);
-    });
+    // Route::post('send-message', function (Request $request) {
+    // $message = $request->input('message');
+    // event(new MessageSent($message)); // ✅ Corrected event class name
+    // return response()->json(['success' => true, 'message' => $message]);
+    // });
 
-    Route::get('testmail', function() {
-        Mail::raw('Test email from Laravel', function($message) {
-            $message->to('nexsuz.official13@gmail.com')
-                    ->subject('Test Mail');
-        });
-        return 'Email sent';
-    });
+    // Route::get('testmail', function() {
+    //     Mail::raw('Test email from Laravel', function($message) {
+    //         $message->to('nexsuz.official13@gmail.com')
+    //                 ->subject('Test Mail');
+    //     });
+    //     return 'Email sent';
+    // });
 
-    Route::middleware('auth:api')->post('/profile/broadcasting/auth', function () {
-    return Broadcast::auth(request());
-    });
+    // Route::middleware('auth:api')->post('/profile/broadcasting/auth', function () {
+    // return Broadcast::auth(request());
+    // });
     
     // PROTECTED ROUTES
     Route::middleware(['auth:sanctum','checkstatus'])->group(function () {
