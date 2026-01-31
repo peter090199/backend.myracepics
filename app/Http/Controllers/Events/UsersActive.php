@@ -14,14 +14,11 @@ class UsersActive extends Controller
      */
     public function getPhotographers(): JsonResponse
     {
-        // Get the currently authenticated user's code
-        $ownCode = auth()->user()->code ?? null;
-
+        $ownCode = auth()->user()->code;
         $photographers = DB::table('users')
             ->select('fullname', 'code', 'role_code', 'recordstatus')
             ->where('role_code', 'LIKE', '%PHOTOGRAPHER%')
             ->where('recordstatus', 'active')
-            // Order by "is it me?" first (1 for true, 0 for false), then by name
             ->orderByRaw("CASE WHEN code = ? THEN 0 ELSE 1 END ASC", [$ownCode])
             ->orderBy('fullname', 'ASC')
             ->get();
