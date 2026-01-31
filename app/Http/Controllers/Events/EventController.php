@@ -745,8 +745,7 @@ public function uploadx222(Request $request, $uuid)
     
     public function getImagesByCode($code)
     {
-        $user = auth()->user();
-
+        $user = Auth::user();
         if (!$user) {
             return response()->json([
                 'success' => false,
