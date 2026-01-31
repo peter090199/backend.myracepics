@@ -10,7 +10,7 @@ use Illuminate\Http\JsonResponse;
 class UsersActive extends Controller
 {
    /**
-     * Get all active photographers from users and resources.
+     * Get all active photographers from users
      */
     public function getPhotographers(): JsonResponse
     {
@@ -26,8 +26,9 @@ class UsersActive extends Controller
         return response()->json([
             'success' => true,
             'own_code_prioritized' => $ownCode,
+            'count' => $photographers->count(),
             'data' => $photographers,
-            'count' => $photographers->count()
+           
         ], 200);
     }
 }
